@@ -19,8 +19,33 @@ export class CockpitApp {
     this.mapMediaEngine = mapMediaEngine;
     this.domRefs = {};
     this.drawerOpen = false;
+    this.glbLoadProgress = null;
+    this.glbLoaded = false;
+
+    if (typeof window !== 'undefined') {
+
+      window.addEventListener('tesla-glb-progress', (e) => {
+        this.glbLoadProgress = e.detail?.percent || 0;
+        const pill = document.getElementById('glb-loading-pill');
+        if (pill) {
+          pill.textContent = `3D 模型 ${this.glbLoadProgress}%`;
+        }
+      });
+      window.addEventListener('tesla-glb-loaded', () => {
+        this.glbLoaded = true;
+        const pill = document.getElementById('glb-loading-pill');
+        if (pill) {
+          pill.textContent = '高精 3D 已就緒';
+          pill.className = 'mob-vp-pill is-active';
+          setTimeout(() => {
+            if (pill) pill.style.display = 'none';
+          }, 3500);
+        }
+      });
+    }
 
     this.mountShell();
+    this.syncThemeAndBrightness(this.store.getState());
     this.registerCanvases();
     this.bindGlobalEvents();
 
@@ -66,8 +91,9 @@ export class CockpitApp {
     const s = this.store.getState();
     document.documentElement.setAttribute('data-theme', s.environment.timeOfDay);
 
+    const focused = s.system.focusedScreen || 'overview';
     this.root.innerHTML = `
-      <div class="cockpit-shell" id="cockpit-shell" data-view="overview" data-drawer="closed">
+      <div class="cockpit-shell" id="cockpit-shell" data-view="${focused}" data-drawer="closed">
         <header class="cockpit-topbar">
           <div class="topbar-brand">
             <span class="tesla-wordmark">TESLA</span>
@@ -77,12 +103,12 @@ export class CockpitApp {
           </div>
 
           <nav class="view-switcher" aria-label="五端視角切換">
-            <button class="view-tab is-active" data-view-target="overview">${icon('grid', 'tab-icon')} 座艙透視總覽</button>
-            <button class="view-tab" data-view-target="mobile">1. 手機 App</button>
-            <button class="view-tab" data-view-target="center">2. 中控駕駛屏</button>
-            <button class="view-tab" data-view-target="passenger">3. 副駕娛樂屏</button>
-            <button class="view-tab" data-view-target="cluster">4. 儀錶盤</button>
-            <button class="view-tab" data-view-target="hud">5. 抬頭顯示 HUD</button>
+            <button class="view-tab ${focused === 'overview' ? 'is-active' : ''}" data-view-target="overview">${icon('grid', 'tab-icon')} 座艙透視總覽</button>
+            <button class="view-tab ${focused === 'mobile' ? 'is-active' : ''}" data-view-target="mobile">1. 手機 App</button>
+            <button class="view-tab ${focused === 'center' ? 'is-active' : ''}" data-view-target="center">2. 中控駕駛屏</button>
+            <button class="view-tab ${focused === 'passenger' ? 'is-active' : ''}" data-view-target="passenger">3. 副駕娛樂屏</button>
+            <button class="view-tab ${focused === 'cluster' ? 'is-active' : ''}" data-view-target="cluster">4. 儀錶盤</button>
+            <button class="view-tab ${focused === 'hud' ? 'is-active' : ''}" data-view-target="hud">5. 抬頭顯示 HUD</button>
           </nav>
 
           <div class="topbar-actions">
@@ -339,12 +365,19 @@ export class CockpitApp {
     const hasOpen = this.store.hasOpenDoorOrTrunk();
 
     if (badgeContainer) {
+      let glbPillHtml = '';
+      if (!this.glbLoaded) {
+        const text = this.glbLoadProgress !== null ? `3D 模型 ${this.glbLoadProgress}%` : '3D 載入中...';
+        glbPillHtml = `<span id="glb-loading-pill" class="mob-vp-pill is-loading-asset">${text}</span>`;
+      }
+
       badgeContainer.innerHTML = `
         <span class="mob-vp-pill">${s.locked ? '已上鎖' : '已解鎖'}</span>
         <span class="mob-vp-pill ${s.sentryMode ? 'is-active' : ''}" data-action="toggle-sentry" title="點擊切換哨兵模式">
           哨兵 ${s.sentryMode ? '開啟' : '關閉'}
         </span>
         <span class="mob-vp-pill">車內 ${s.climate.cabinTemp.toFixed(0)}°C</span>
+        ${glbPillHtml}
       `;
     }
 

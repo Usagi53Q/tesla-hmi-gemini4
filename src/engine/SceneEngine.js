@@ -257,6 +257,9 @@ export class SceneEngine {
     this.contactShadowMesh.rotation.x = -Math.PI / 2;
     this.contactShadowMesh.position.y = 0.015;
     this.egoCarGroup.add(this.contactShadowMesh);
+
+    this.initBaseMaterials();
+    this.buildProceduralEgoCar();
   }
 
   initRoadAndEnvironment() {
@@ -552,47 +555,7 @@ export class SceneEngine {
     this.scene.add(this.weatherPoints);
   }
 
-  loadTeslaModel() {
-    const loader = new GLTFLoader();
-    loader.load(
-      './assets/models/tesla-model-3.glb',
-      (gltf) => {
-        const model = gltf.scene;
-        model.rotation.y = Math.PI;
-        model.updateMatrixWorld(true);
-
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scaleFactor = 4.18 / maxDim;
-        model.scale.multiplyScalar(scaleFactor);
-        model.updateMatrixWorld(true);
-
-        const scaledBox = new THREE.Box3().setFromObject(model);
-        const scaledCenter = new THREE.Vector3();
-        scaledBox.getCenter(scaledCenter);
-        model.position.x -= scaledCenter.x;
-        model.position.z -= scaledCenter.z;
-        model.position.y -= scaledBox.min.y;
-
-        this.egoCarGroup.add(model);
-        model.updateMatrixWorld(true);
-
-        this.setupModelMaterialsAndRig(model);
-        this.upgradeTrafficToRealModelSilhouette(model);
-        this.buildArticulatedChargePortAndLightFixtures();
-        this.modelLoaded = true;
-      },
-      undefined,
-      (err) => {
-        console.warn('[SceneEngine] GLB load fallback triggered:', err);
-      }
-    );
-  }
-
-  setupModelMaterialsAndRig(model) {
+  initBaseMaterials() {
     const preset = PAINT_PRESETS[this.store.getState().paintColor] || PAINT_PRESETS.quicksilver;
 
     this.carBodyPaintMat = new THREE.MeshPhysicalMaterial({
@@ -609,8 +572,7 @@ export class SceneEngine {
       envMapIntensity: 0.95
     });
 
-    // 柔和深灰全景天幕與車窗玻璃（降低 clearcoat 與 envMapIntensity，徹底消除車頂刺眼白斑過曝）
-    const glassMat = new THREE.MeshPhysicalMaterial({
+    this.glassMat = new THREE.MeshPhysicalMaterial({
       color: 0x0d1016,
       metalness: 0.20,
       roughness: 0.18,
@@ -620,21 +582,21 @@ export class SceneEngine {
       envMapIntensity: 0.72
     });
 
-    const frontClearLensMat = new THREE.MeshBasicMaterial({
+    this.frontClearLensMat = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
       opacity: 0.04,
       depthWrite: false
     });
 
-    const rearSmokedLensMat = new THREE.MeshBasicMaterial({
+    this.rearSmokedLensMat = new THREE.MeshBasicMaterial({
       color: 0x16181d,
       transparent: true,
       opacity: 0.14,
       depthWrite: false
     });
 
-    const tireRubberMat = new THREE.MeshStandardMaterial({
+    this.tireRubberMat = new THREE.MeshStandardMaterial({
       color: 0x14161a,
       roughness: 0.86,
       metalness: 0.05,
@@ -642,7 +604,7 @@ export class SceneEngine {
       normalScale: new THREE.Vector2(0.16, 0.16)
     });
 
-    const wheelRimAlloyMat = new THREE.MeshPhysicalMaterial({
+    this.wheelRimAlloyMat = new THREE.MeshPhysicalMaterial({
       color: 0xaeb6c2,
       map: this.wheelSpokeTex,
       metalness: 0.78,
@@ -651,13 +613,13 @@ export class SceneEngine {
       envMapIntensity: 1.05
     });
 
-    const aeroInsertMat = new THREE.MeshStandardMaterial({
+    this.aeroInsertMat = new THREE.MeshStandardMaterial({
       color: 0x282c34,
       metalness: 0.65,
       roughness: 0.35
     });
 
-    const brushedMetalMat = new THREE.MeshPhysicalMaterial({
+    this.brushedMetalMat = new THREE.MeshPhysicalMaterial({
       color: 0xbec6d2,
       metalness: 0.82,
       roughness: 0.24,
@@ -665,30 +627,29 @@ export class SceneEngine {
       envMapIntensity: 1.05
     });
 
-    const brakeRotorGreyMat = new THREE.MeshStandardMaterial({
+    this.brakeRotorGreyMat = new THREE.MeshStandardMaterial({
       color: 0x525866,
       metalness: 0.75,
       roughness: 0.36
     });
 
-    const caliperDarkMat = new THREE.MeshStandardMaterial({
+    this.caliperDarkMat = new THREE.MeshStandardMaterial({
       color: 0x374151,
       metalness: 0.60,
       roughness: 0.38
     });
 
-    const interiorDarkMat = new THREE.MeshStandardMaterial({
+    this.interiorDarkMat = new THREE.MeshStandardMaterial({
       color: 0x1b1e24,
       roughness: 0.75,
       metalness: 0.06
     });
-    const interiorWhiteLeatherMat = new THREE.MeshStandardMaterial({
+    this.interiorWhiteLeatherMat = new THREE.MeshStandardMaterial({
       color: 0xd0d6e0,
       roughness: 0.55,
       metalness: 0.04
     });
 
-    // 柔和自然的車燈自發光材質（不高於 1.25，避免在手機端車頭產生過曝白團）
     this.matFrontStripLeft = new THREE.MeshBasicMaterial({
       color: new THREE.Color(0.92, 0.96, 1.02),
       side: THREE.DoubleSide
@@ -733,6 +694,194 @@ export class SceneEngine {
       color: new THREE.Color(0.18, 0.18, 0.20),
       side: THREE.DoubleSide
     });
+  }
+
+  buildProceduralEgoCar() {
+    this.proceduralEgoCar = new THREE.Group();
+    this.proceduralEgoCar.name = 'proceduralEgoCar';
+
+    // 1. Model 3 流線型 Fastback 轎跑車身主體
+    const profile = new THREE.Shape();
+    profile.moveTo(-2.05, 0.16);
+    profile.quadraticCurveTo(-2.10, 0.45, -1.95, 0.72);
+    profile.lineTo(-1.60, 0.82);
+    profile.bezierCurveTo(-1.15, 1.30, 0.15, 1.35, 0.90, 0.86);
+    profile.quadraticCurveTo(1.60, 0.78, 2.05, 0.48);
+    profile.quadraticCurveTo(2.12, 0.28, 2.02, 0.16);
+    profile.closePath();
+
+    const extrudeGeo = new THREE.ExtrudeGeometry(profile, {
+      depth: 1.58,
+      bevelEnabled: true,
+      bevelSegments: 4,
+      steps: 1,
+      bevelSize: 0.11,
+      bevelThickness: 0.11
+    });
+    extrudeGeo.center();
+    extrudeGeo.rotateY(Math.PI / 2);
+
+    const bodyMesh = new THREE.Mesh(extrudeGeo, this.carBodyPaintMat);
+    bodyMesh.position.y = 0.68;
+    bodyMesh.castShadow = true;
+    bodyMesh.receiveShadow = true;
+    this.proceduralEgoCar.add(bodyMesh);
+
+    // 2. 全景黑色高光玻璃天幕
+    const glassGeo = new THREE.BoxGeometry(1.22, 0.08, 2.15);
+    const glassMesh = new THREE.Mesh(glassGeo, this.glassMat);
+    glassMesh.position.set(0, 1.25, -0.22);
+    glassMesh.rotation.x = 0.08;
+    this.proceduralEgoCar.add(glassMesh);
+
+    // 3. 左右後視鏡
+    const mirrorGeo = new THREE.BoxGeometry(0.18, 0.08, 0.12);
+    const mirrorL = new THREE.Mesh(mirrorGeo, this.carBodyPaintMat);
+    mirrorL.position.set(0.96, 0.92, 0.65);
+    const mirrorR = new THREE.Mesh(mirrorGeo, this.carBodyPaintMat);
+    mirrorR.position.set(-0.96, 0.92, 0.65);
+    this.proceduralEgoCar.add(mirrorL, mirrorR);
+
+    // 4. 車頭燈光組（左右 C 型 LED 日行燈條 + 矩陣大燈）
+    const headstripGeo = new THREE.BoxGeometry(0.34, 0.038, 0.06);
+    const headstripL = new THREE.Mesh(headstripGeo, this.matFrontStripLeft);
+    headstripL.position.set(0.68, 0.66, 2.04);
+    headstripL.rotation.y = -0.25;
+    const headstripR = new THREE.Mesh(headstripGeo, this.matFrontStripRight);
+    headstripR.position.set(-0.68, 0.66, 2.04);
+    headstripR.rotation.y = 0.25;
+
+    const mainLightGeo = new THREE.BoxGeometry(0.18, 0.05, 0.04);
+    const mainLightL = new THREE.Mesh(mainLightGeo, this.matHeadlight);
+    mainLightL.position.set(0.72, 0.64, 2.02);
+    const mainLightR = new THREE.Mesh(mainLightGeo, this.matHeadlight);
+    mainLightR.position.set(-0.72, 0.64, 2.02);
+    this.proceduralEgoCar.add(headstripL, headstripR, mainLightL, mainLightR);
+
+    // 5. 車尾貫穿與左右 LED 尾燈組
+    const tailstripGeo = new THREE.BoxGeometry(0.42, 0.042, 0.05);
+    const tailstripL = new THREE.Mesh(tailstripGeo, this.matTailLeft);
+    tailstripL.position.set(0.62, 0.72, -2.04);
+    tailstripL.rotation.y = 0.20;
+    const tailstripR = new THREE.Mesh(tailstripGeo, this.matTailRight);
+    tailstripR.position.set(-0.62, 0.72, -2.04);
+    tailstripR.rotation.y = -0.20;
+
+    const brakeCenterGeo = new THREE.BoxGeometry(0.58, 0.025, 0.04);
+    const brakeCenter = new THREE.Mesh(brakeCenterGeo, this.matBrake);
+    brakeCenter.position.set(0, 1.18, -1.35);
+    this.proceduralEgoCar.add(tailstripL, tailstripR, brakeCenter);
+
+    // 6. 四個程序化旋轉車輪與金屬輪轂
+    const wheelFrontGroup = new THREE.Group();
+    const wheelRearGroup = new THREE.Group();
+    wheelFrontGroup.position.set(0, 0.35, 1.35);
+    wheelRearGroup.position.set(0, 0.35, -1.45);
+
+    const makeWheel = (isLeft) => {
+      const wg = new THREE.Group();
+      const tireGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.22, 24);
+      tireGeo.rotateZ(Math.PI / 2);
+      const tire = new THREE.Mesh(tireGeo, this.tireRubberMat);
+      tire.castShadow = true;
+
+      const rimGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.224, 16);
+      rimGeo.rotateZ(Math.PI / 2);
+      const rim = new THREE.Mesh(rimGeo, this.wheelRimAlloyMat);
+
+      wg.add(tire, rim);
+      wg.position.x = isLeft ? 0.88 : -0.88;
+      return wg;
+    };
+
+    wheelFrontGroup.add(makeWheel(true), makeWheel(false));
+    wheelRearGroup.add(makeWheel(true), makeWheel(false));
+
+    this.proceduralEgoCar.add(wheelFrontGroup, wheelRearGroup);
+
+    this.carParts.wheelsFront = wheelFrontGroup;
+    this.carParts.wheelsRear = wheelRearGroup;
+
+    // 保底車門與蓋板（輕量旋轉虛擬節點，確保未載入 GLB 時點擊車控也能看見開門效果）
+    const dummyDoorFL = new THREE.Group();
+    dummyDoorFL.position.set(0.85, 0.65, 0.3);
+    const dummyFrunk = new THREE.Group();
+    dummyFrunk.position.set(0, 0.65, 1.5);
+    const dummyTrunk = new THREE.Group();
+    dummyTrunk.position.set(0, 0.75, -1.8);
+    this.proceduralEgoCar.add(dummyDoorFL, dummyFrunk, dummyTrunk);
+    this.carParts.doorFL = dummyDoorFL;
+    this.carParts.frunk = dummyFrunk;
+    this.carParts.trunk = dummyTrunk;
+
+    this.egoCarGroup.add(this.proceduralEgoCar);
+  }
+
+  loadTeslaModel() {
+    const loader = new GLTFLoader();
+    loader.load(
+      './assets/models/tesla-model-3.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        model.rotation.y = Math.PI;
+        model.updateMatrixWorld(true);
+
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scaleFactor = 4.18 / maxDim;
+        model.scale.multiplyScalar(scaleFactor);
+        model.updateMatrixWorld(true);
+
+        const scaledBox = new THREE.Box3().setFromObject(model);
+        const scaledCenter = new THREE.Vector3();
+        scaledBox.getCenter(scaledCenter);
+        model.position.x -= scaledCenter.x;
+        model.position.z -= scaledCenter.z;
+        model.position.y -= scaledBox.min.y;
+
+        if (this.proceduralEgoCar) {
+          this.proceduralEgoCar.visible = false;
+        }
+
+        this.egoCarGroup.add(model);
+        model.updateMatrixWorld(true);
+
+        this.setupModelMaterialsAndRig(model);
+        this.upgradeTrafficToRealModelSilhouette(model);
+        this.buildArticulatedChargePortAndLightFixtures();
+        this.modelLoaded = true;
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('tesla-glb-loaded', { detail: { loaded: true } }));
+        }
+      },
+      (xhr) => {
+        if (xhr && xhr.lengthComputable && xhr.total > 0 && typeof window !== 'undefined') {
+          const percent = Math.min(100, Math.round((xhr.loaded / xhr.total) * 100));
+          window.dispatchEvent(new CustomEvent('tesla-glb-progress', { detail: { percent } }));
+        }
+      },
+      (err) => {
+        console.warn('[SceneEngine] GLB load fallback active (procedural model maintained):', err);
+      }
+    );
+  }
+
+  setupModelMaterialsAndRig(model) {
+    const frontClearLensMat = this.frontClearLensMat;
+    const rearSmokedLensMat = this.rearSmokedLensMat;
+    const glassMat = this.glassMat;
+    const tireRubberMat = this.tireRubberMat;
+    const wheelRimAlloyMat = this.wheelRimAlloyMat;
+    const aeroInsertMat = this.aeroInsertMat;
+    const brushedMetalMat = this.brushedMetalMat;
+    const brakeRotorGreyMat = this.brakeRotorGreyMat;
+    const caliperDarkMat = this.caliperDarkMat;
+    const interiorDarkMat = this.interiorDarkMat;
+    const interiorWhiteLeatherMat = this.interiorWhiteLeatherMat;
 
     const splitSymmetricLightMesh = (mesh, matLeft, matRight) => {
       try {
