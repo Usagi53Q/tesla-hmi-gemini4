@@ -1,10 +1,10 @@
 /**
  * TESLA COCKPIT HMI — APPLICATION ENTRY POINT
  */
-import { vehicleStore } from './state/vehicleStore.js?v=14';
-import { SceneEngine } from './engine/SceneEngine.js?v=14';
-import { MapAndMediaEngine } from './engine/MapAndMediaCanvas.js?v=14';
-import { CockpitApp } from './ui/CockpitApp.js?v=14';
+import { vehicleStore } from './state/vehicleStore.js?v=15';
+import { SceneEngine } from './engine/SceneEngine.js?v=15';
+import { MapAndMediaEngine } from './engine/MapAndMediaCanvas.js?v=15';
+import { CockpitApp } from './ui/CockpitApp.js?v=15';
 
 function bootstrapHMI() {
   const rootEl = document.getElementById('app');

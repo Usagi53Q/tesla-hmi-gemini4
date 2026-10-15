@@ -23,16 +23,32 @@ export class CockpitApp {
     this.glbLoaded = false;
 
     if (typeof window !== 'undefined') {
-
       window.addEventListener('tesla-glb-progress', (e) => {
         this.glbLoadProgress = e.detail?.percent || 0;
+        const percent = this.glbLoadProgress;
+
+        // 1. 更新手機端藥丸
         const pill = document.getElementById('glb-loading-pill');
         if (pill) {
-          pill.textContent = `3D 模型 ${this.glbLoadProgress}%`;
+          pill.textContent = `3D 模型 ${percent}%`;
         }
+
+        // 2. 更新中控 3D 視口全景科技感加載蒙層
+        const barFill = document.getElementById('glb-progress-fill');
+        if (barFill) barFill.style.width = `${percent}%`;
+
+        const textEl = document.getElementById('glb-progress-text');
+        if (textEl) textEl.textContent = `高精 3D 載入中... ${percent}% (22.6MB)`;
+
+        // 3. 更新頂部 Header 狀態欄微標
+        const headerText = document.getElementById('header-glb-text');
+        if (headerText) headerText.textContent = `3D 載入 ${percent}%`;
       });
+
       window.addEventListener('tesla-glb-loaded', () => {
         this.glbLoaded = true;
+
+        // 1. 手機端藥丸反饋
         const pill = document.getElementById('glb-loading-pill');
         if (pill) {
           pill.textContent = '高精 3D 已就緒';
@@ -41,6 +57,25 @@ export class CockpitApp {
             if (pill) pill.style.display = 'none';
           }, 3500);
         }
+
+        // 2. 中控全景蒙層優雅淡出
+        const overlay = document.getElementById('center-model-loading-overlay');
+        const textEl = document.getElementById('glb-progress-text');
+        const barFill = document.getElementById('glb-progress-fill');
+        if (barFill) barFill.style.width = '100%';
+        if (textEl) textEl.textContent = '高精 3D 孿生已就緒 (100%)';
+        if (overlay) {
+          overlay.classList.add('is-loaded');
+          setTimeout(() => {
+            if (overlay) overlay.style.display = 'none';
+          }, 600);
+        }
+
+        // 3. 頂部狀態微標切換為就緒綠色
+        const headerBadge = document.getElementById('header-glb-status');
+        const headerText = document.getElementById('header-glb-text');
+        if (headerBadge) headerBadge.classList.add('is-ready');
+        if (headerText) headerText.textContent = '3D 孿生就緒';
       });
     }
 
@@ -112,6 +147,10 @@ export class CockpitApp {
           </nav>
 
           <div class="topbar-actions">
+            <div id="header-glb-status" class="header-glb-badge ${this.glbLoaded ? 'is-ready' : ''}" title="Tesla Model 3 3D 數字孿生資產狀態">
+              <span class="status-dot"></span>
+              <span id="header-glb-text">${this.glbLoaded ? '3D 孿生就緒' : (this.glbLoadProgress !== null ? `3D 載入 ${this.glbLoadProgress}%` : '3D 載入中...')}</span>
+            </div>
             <div class="fps-badge" title="WebGL2 實時幀率">
               <span class="fps-dot"></span>
               <span id="live-fps">60</span> FPS
@@ -230,6 +269,21 @@ export class CockpitApp {
                       <div class="center-left-pane">
                         <canvas id="canvas-center-3d" class="screen-3d-canvas center-3d-canvas"></canvas>
                         <div id="center-left-overlay" class="center-left-overlay"></div>
+                        <div id="center-model-loading-overlay" class="model-loading-overlay ${this.glbLoaded ? 'is-loaded' : ''}">
+                          <div class="model-loading-content">
+                            <div class="tesla-t-pulse">
+                              <svg viewBox="0 0 340 340" width="36" height="36" class="tesla-t-svg">
+                                <path fill="currentColor" d="M170 34c26.2 0 55.4 6.3 75.3 16.4l11.4-25.1C233 11.5 199.7 4 170 4s-63 7.5-86.7 21.3l11.4 25.1C114.6 40.3 143.8 34 170 34zm0 43.8c-28.8 0-48.4 5.9-48.4 5.9l3.5 18.5s18.2-3.8 44.9-3.8c26.7 0 44.9 3.8 44.9 3.8l3.5-18.5s-19.6-5.9-44.9-5.9zm-13.6 42.6v190.5h27.2V120.4c33.9 4.3 64.9 16.9 64.9 16.9l8.6-23.7s-35.3-14.7-73.5-17.5c-38.2 2.8-73.5 17.5-73.5 17.5l8.6 23.7s31-12.6 64.9-16.9z"/>
+                              </svg>
+                            </div>
+                            <div class="model-loading-title">Tesla Model 3 數位孿生</div>
+                            <div class="model-loading-progress-bar">
+                              <div id="glb-progress-fill" class="progress-fill" style="width: ${this.glbLoaded ? 100 : (this.glbLoadProgress || 0)}%"></div>
+                            </div>
+                            <div id="glb-progress-text" class="model-loading-status">${this.glbLoaded ? '高精 3D 孿生已就緒' : (this.glbLoadProgress !== null ? `高精 3D 載入中... ${this.glbLoadProgress}% (22.6MB)` : '高精 3D 載入中... 0% (22.6MB)')}</div>
+                            <div class="model-loading-hint">首次載入需自全球 CDN 下載真實高精 3D 網格，完成後自動呈現</div>
+                          </div>
+                        </div>
                       </div>
 
                       <div class="center-right-pane">
@@ -338,6 +392,16 @@ export class CockpitApp {
   renderAllUILayers() {
     const s = this.store.getState();
     this.syncThemeAndBrightness(s);
+
+    const shell = document.getElementById('cockpit-shell');
+    const focused = s.system.focusedScreen || 'overview';
+    if (shell && shell.dataset.view !== focused) {
+      shell.dataset.view = focused;
+    }
+    const tabs = document.querySelectorAll('.view-tab');
+    tabs.forEach(tab => {
+      tab.classList.toggle('is-active', tab.dataset.viewTarget === focused);
+    });
 
     this.renderMobileUI(s);
     this.renderCenterLeftOverlay(s);
@@ -715,17 +779,21 @@ export class CockpitApp {
 
       <div class="center-bottom-dock-stack">
         <div class="center-fixed-quick-bar" role="group" aria-label="車門與箱蓋固定快捷區">
-          <button class="${doorFlBtn.className} quick-bar-pill" data-action="toggle-door" data-part="fl" ${doorFlBtn.attrs}>
-            車門 ${s.doors.fl ? '已開' : '開啟'}
+          <button class="${doorFlBtn.className} quick-bar-pill ${s.doors.fl ? 'is-active' : ''}" data-action="toggle-door" data-part="fl" ${doorFlBtn.attrs} title="左前車門 · ${s.doors.fl ? '已開啟' : '已關閉'}">
+            <span class="pill-badge-dot ${s.doors.fl ? 'is-open' : ''}"></span>
+            <span class="pill-label">車門</span>
           </button>
-          <button class="${frunkBtn.className} quick-bar-pill" data-action="toggle-door" data-part="frunk" ${frunkBtn.attrs}>
-            前備箱 ${s.doors.frunk ? '已開' : '開啟'}
+          <button class="${frunkBtn.className} quick-bar-pill ${s.doors.frunk ? 'is-active' : ''}" data-action="toggle-door" data-part="frunk" ${frunkBtn.attrs} title="前備箱 · ${s.doors.frunk ? '已開啟' : '已關閉'}">
+            <span class="pill-badge-dot ${s.doors.frunk ? 'is-open' : ''}"></span>
+            <span class="pill-label">前箱</span>
           </button>
-          <button class="${trunkBtn.className} quick-bar-pill" data-action="toggle-door" data-part="trunk" ${trunkBtn.attrs}>
-            尾箱 ${s.doors.trunk ? '已開' : '開啟'}
+          <button class="${trunkBtn.className} quick-bar-pill ${s.doors.trunk ? 'is-active' : ''}" data-action="toggle-door" data-part="trunk" ${trunkBtn.attrs} title="後備箱 · ${s.doors.trunk ? '已開啟' : '已關閉'}">
+            <span class="pill-badge-dot ${s.doors.trunk ? 'is-open' : ''}"></span>
+            <span class="pill-label">後箱</span>
           </button>
-          <button class="${portBtn.className} quick-bar-pill" data-action="toggle-door" data-part="chargePort" ${portBtn.attrs}>
-            充電口 ${s.doors.chargePort ? '已開' : '開啟'}
+          <button class="${portBtn.className} quick-bar-pill ${s.doors.chargePort ? 'is-active' : ''}" data-action="toggle-door" data-part="chargePort" ${portBtn.attrs} title="充電口 · ${s.doors.chargePort ? '已開啟' : '已關閉'}">
+            <span class="pill-badge-dot ${s.doors.chargePort ? 'is-open' : ''}"></span>
+            <span class="pill-label">電口</span>
           </button>
         </div>
 

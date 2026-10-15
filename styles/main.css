@@ -3155,3 +3155,154 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   TESLA MODEL 3 超高精 3D 數字孿生資產載入指示器與狀態徽標
+   ========================================================================== */
+
+/* 1. 頂部 Header 狀態欄 3D 狀態微標 */
+.header-glb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(30, 35, 45, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+}
+.header-glb-badge .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+  animation: pulse-dot 1.4s ease-in-out infinite alternate;
+}
+.header-glb-badge.is-ready {
+  background: rgba(16, 36, 26, 0.75);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+.header-glb-badge.is-ready .status-dot {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.9);
+  animation: none;
+}
+
+/* 2. 中控 3D 視口全景科技感加載蒙層 */
+.model-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(17, 20, 27, 0.90) 0%, rgba(10, 12, 16, 0.96) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s ease;
+  pointer-events: auto;
+}
+.model-loading-overlay.is-loaded {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.model-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 280px;
+  padding: 20px;
+}
+.tesla-t-pulse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f1f5f9;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.45));
+  animation: pulse-tesla-t 2s ease-in-out infinite;
+}
+@keyframes pulse-tesla-t {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.78;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.8));
+  }
+}
+.model-loading-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f8fafc;
+  margin-bottom: 10px;
+}
+.model-loading-progress-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 8px;
+}
+.model-loading-progress-bar .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #ffffff);
+  border-radius: 2px;
+  transition: width 0.25s ease-out;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.8);
+}
+.model-loading-status {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+.model-loading-hint {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+/* 3. 快捷車門藥丸按鈕的指示小圓點與文字 */
+.pill-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #64748b;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-right: 3px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pill-badge-dot.is-open {
+  background: #22c55e;
+  box-shadow: 0 0 5px rgba(34, 197, 94, 0.8);
+}
+.quick-bar-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.quick-bar-pill.is-active {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #86efac;
+}
+
+
