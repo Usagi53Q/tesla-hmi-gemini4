@@ -1,15 +1,15 @@
-import { icon } from './icons.js';
+import { icon } from './icons.js?v=30';
 
 export function renderDesignDocModal(s) {
   if (!s || !s.system || !s.system.showDesignDoc) return '';
 
   return `
     <div class="doc-modal-backdrop" data-action="close-design-doc">
-      <div class="doc-modal-panel" role="dialog" aria-labelledby="design-doc-title" onclick="event.stopPropagation()">
+      <div class="doc-modal-card" role="dialog" aria-labelledby="design-doc-title" onclick="event.stopPropagation()">
         <header class="doc-modal-header">
           <div>
-            <div class="doc-badge">TESLA COCKPIT HMI · ARCHITECTURE & DESIGN SPECIFICATION</div>
-            <h2 class="doc-title" id="design-doc-title">五端智能座艙 HMI 設計說明文檔</h2>
+            <div class="doc-kicker">TESLA MODEL S (2021+ REFRESH) · ARCHITECTURE & DESIGN SPECIFICATION</div>
+            <h2 id="design-doc-title">五端智能座艙 HMI 質感與真實度重構設計說明</h2>
           </div>
           <button class="ctrl-btn icon-only" data-action="close-design-doc" aria-label="關閉設計說明文檔">
             ${icon('close')}
@@ -18,112 +18,72 @@ export function renderDesignDocModal(s) {
 
         <div class="doc-modal-body">
           <section class="doc-section">
-            <h3>01 · 設計目標與使用場景 (Design Goals & Scenarios)</h3>
-            <p class="doc-lead">
-              本系統針對 Tesla 品牌純電新能源車打造量產級五端協同座艙 HMI，核心目標是在「零視覺冗餘、克制中性深灰/白配色」與「毫秒級多端狀態同步」之間取得平衡，覆蓋從離車遠程控車、上車準備、高速/城市輔助駕駛到副駕沉浸娛樂的全閉環體驗：
+            <h3>零、對標車型調整：Tesla Model S (2021+ Palladium 改款)</h3>
+            <p>
+              本專案對標車型由 Model 3 全面升級為 <strong>Tesla Model S（2021 年後改款）</strong>：
+              中控屏改為 <strong>17 吋懸浮橫屏（比例 2200:1300）</strong> 並支援向駕駛側傾斜、居中、向副駕傾斜三段調節；方向盤後方配置 <strong>8:3 橫條小屏儀錶盤</strong>，嚴格執行分工（儀錶盤僅顯示車速、擋位、胎壓/車門/低電量報警、轉向燈與雙閃、限速與輔助駕駛狀態、實時能耗曲線；導航地圖與所有觸控設置均置於 17 吋中控屏）。副駕娛樂屏與擋風玻璃 AR-HUD 維持為概念設計。3D 車輛資產採用 Sketchfab CC-BY 4.0 授權模型（作者 Ameer Studio）並按 Model S 寬體低趴長軸距比例調校，於頁面底部清楚註明作者與來源。
             </p>
-            <div class="doc-grid-5">
-              <div class="doc-card">
-                <h4>1. 手機 App（場景旁）</h4>
-                <p>車主離車或出發前遠程查看車輛 3D 狀態、剩餘電量與 WLTP 續航，執行提前預冷/預熱座艙、停車場閃燈鳴笛尋車、解鎖車門與尾箱，以及查閱超充進度與歷史充電記錄。</p>
-              </div>
-              <div class="doc-card">
-                <h4>2. 中控駕駛屏（方向盤旁）</h4>
-                <p>1920×1200 比例核心控制中樞。左側常駐 3D 車輛與克制型 ADAS 感知視圖，右側多層級矢量導航地圖打底，底部常駐 Dock 欄；一級觸達換擋、駕駛模式、雙區空調、燈光、雨刮與後視鏡。</p>
-              </div>
-              <div class="doc-card">
-                <h4>3. 副駕娛樂屏（副駕前方）</h4>
-                <p>副駕專屬獨立視聽與遊戲空間。提供單色細線頻譜音樂、4K 車載劇院與街機賽車遊戲三大入口，並與主屏音響及導航語音實時聯動（導航播報時自動壓低娛樂音量）。</p>
-              </div>
-              <div class="doc-card">
-                <h4>4. 儀錶盤（方向盤後方）</h4>
-                <p>控制在 3:1 以內（2.85:1），內容居中收斂於 88% 安全區並放大字級（車速 58px），呈現平滑車速、擋位、雙向功率條、續航里程、細線車道與灰色前車輪廓及胎壓/車門報警。</p>
-              </div>
-              <div class="doc-card">
-                <h4>5. 抬頭顯示 HUD（擋風玻璃）</h4>
-                <p>疊加於方向盤上方擋風玻璃視野中，採用四周留黑的居中緊湊投影小視窗，放大字級（車速 60px）呈現實時車速、限速標誌、貼地導航箭頭與前車跟車距離。</p>
-              </div>
-            </div>
           </section>
 
           <section class="doc-section">
-            <h3>02 · 信息架構 (Information Architecture)</h3>
+            <h3>一、五端分工與信息架構 (Information Architecture)</h3>
             <table class="doc-table">
               <thead>
                 <tr>
                   <th>終端名稱</th>
-                  <th>一級常駐信息層 (L1 Persistent)</th>
-                  <th>二級高頻控制層 (L2 Direct Controls)</th>
-                  <th>三級模態與明細層 (L3 Contextual Overlay)</th>
+                  <th>硬件比例與物理定位</th>
+                  <th>核心職責與補齊功能</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><strong>1. 手機 App</strong></td>
-                  <td>車型名稱、鎖車狀態、3D 可旋轉車身、SOC 電量與預估續航</td>
-                  <td>上鎖/解鎖、空調預冷預熱、閃燈鳴笛尋車、充電口開關</td>
-                  <td>車門/前備箱/尾箱分區觸控面板、座艙溫控步進器、超充功率與歷史充電記錄明細</td>
+                  <td><strong>1. iOS 手機 App</strong></td>
+                  <td>9:19.5 真實 3D 鈦金屬邊框手機（含靈動島、狀態欄、Home 指示條，可拿起放大全屏）</td>
+                  <td>3D 車況預覽、車輛定位地圖、一鍵發送目的地到車、行程能耗記錄、08:15 預約出發、數位鑰匙管理、安全與哨兵設置、OTA 軟件更新、服務中心預約。</td>
                 </tr>
                 <tr>
-                  <td><strong>2. 中控駕駛屏</strong></td>
-                  <td>左側 P/R/N/D 換擋軌、實時車速、3D ADAS 視圖；右側多層級矢量地圖；底部常駐 Dock</td>
-                  <td>導航轉向卡片、快捷車門/箱蓋控制、音樂迷你控制卡、底部溫度與音量直調按鈕</td>
-                  <td>雙溫區空調與風量全屏面板、車輛設置（踏板與駕駛模式/動能回收、車燈、雨刮、後視鏡調節）</td>
+                  <td><strong>2. 17" 中控橫屏</strong></td>
+                  <td>2200:1300 (22:13) 懸浮橫屏，支援向駕駛側傾斜 (-6.5°)</td>
+                  <td>左側 ADAS 3D 視圖與緊湊「車門/前備箱/尾箱/充電口」圖標列 + 獨立音樂卡；右側離線向量地圖、目的地搜尋與三路線選擇（最快/節能/景觀）；底部 Dock 整合應用列表、7 大完整設置頁（顯示、燈光、鎖車、輔助駕駛、安全、日程、服務）、充電頁、360° 環視相機、藍牙電話、自然語音控制。</td>
                 </tr>
                 <tr>
                   <td><strong>3. 副駕娛樂屏</strong></td>
-                  <td>頂部音樂/影片/遊戲三入口導航欄、右上方主屏同步音量與導航語音狀態指示</td>
-                  <td>單色細線頻譜/4K 劇院畫布/可玩街機遊戲區、播放/暫停/上下曲、進度拖拽條</td>
-                  <td>曲目播放列表、4K 劇院影片庫切換、街機賽車方向與加速控制</td>
+                  <td>16:10 副駕前方內嵌娛樂屏（概念設計）</td>
+                  <td>原創虛構歌單黑膠與單色細線頻譜、8 部真正可播放的多場景程序化生成動態短片（灣岸星軌、極光冰原、阿爾卑斯雪山、風洞流線等）、3D 街機競速；音量控件與歌名完整可見並與主屏 100% 聯動。</td>
                 </tr>
                 <tr>
-                  <td><strong>4. 儀錶盤</strong></td>
-                  <td>居中 88% 安全區、3D 細線車道與灰色前車輪廓、放大字級車速與擋位、雙向功率條</td>
-                  <td>左下電池電量與續航里程、右上路口轉向提示卡片、右下四輪實時胎壓 (Bar)</td>
-                  <td>車門/前備箱/尾箱未關報警膠囊、低胎壓警示、前車過近碰撞預警 (FCW)</td>
+                  <td><strong>4. 8:3 儀錶盤</strong></td>
+                  <td>8:3 方向盤正後方內嵌橫條屏</td>
+                  <td>專注駕駛必要信息：等寬車速、P/R/N/D 擋位、轉向燈與雙閃指示、道路限速與輔助駕駛狀態、三大行車報警（胎壓異常、車門未關、低電量）、以及最近 30 筆 Wh/km 實時能耗曲線。</td>
                 </tr>
                 <tr>
-                  <td><strong>5. 抬頭顯示 HUD</strong></td>
-                  <td>四周留黑居中投影小視窗、超大字級車速、當前道路限速圓牌、ADAS 巡航設定車速</td>
-                  <td>3D AR 貼地導航箭頭、下一路口轉向圖標與距離倒數</td>
-                  <td>前車實時距離標尺 (m) 與安全時距色帶</td>
+                  <td><strong>5. 擋風玻璃 HUD</strong></td>
+                  <td>前擋風玻璃無框透明光學疊加層（概念設計，非獨立方框）</td>
+                  <td>直接疊加於擋風玻璃外的真實 3D 道路上，顯示車道偏離光學提示帶、動態變色跟車距離色帶（綠/珀/紅）、3D 貼地導航轉向箭頭、實時車速與路口距離。</td>
                 </tr>
               </tbody>
             </table>
           </section>
 
           <section class="doc-section">
-            <h3>03 · 核心流程 (Core User Flows)</h3>
-            <div class="doc-flow-list">
-              <div class="doc-flow-item">
-                <span class="flow-step">流程 A · 遠程備車與上車啟動閉環</span>
-                <p>用戶於手機 App 點擊「預冷/預熱」與「解鎖」→ 3D 車身日行燈點亮，中控駕駛屏與儀錶盤同步更新解鎖狀態與座艙目標溫度 → 開啟左前車門（3D 車門平滑開啟，儀錶盤與中控同步顯示左前門開啟警示）→ 關門並於中控屏切換至 D 擋 → 全車自動落鎖、進入行駛態。</p>
-              </div>
-              <div class="doc-flow-item">
-                <span class="flow-step">流程 B · 行駛中 ADAS 感知、導航與副駕娛樂協同</span>
-                <p>D 擋加速行駛時 → 3D 道路、細線車道、路燈與灰色周圍 AI 車流按實時車速 60fps 推進 → 儀錶盤、中控屏、HUD 三端車速、功率輸出/動能回收條、轉向距離與前車距離毫秒級同步 → 觸發導航語音播報時，副駕娛樂屏自動壓低媒體音量（Audio Ducking）並顯示視覺提示。</p>
-              </div>
-              <div class="doc-flow-item">
-                <span class="flow-step">流程 C · 環境感知（晝夜與天氣）自適應切換</span>
-                <p>於右側可收合控制抽屜切換「日間 / 夜間」或「晴 / 雨 / 雪」時 → 3D 場景天光 HDRI、路面濕滑鏡面反射與雨雪粒子實時變化 → Auto 模式車燈與雨刮自動啟動對應檔位 → 五端 UI 自動在夜間中性深灰模式與日間純白模式間平滑過渡。</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="doc-section">
-            <h3>04 · 視覺規範、交互四態與關鍵設計決策</h3>
-            <div class="doc-grid-3">
+            <h3>二、狀態一致性與去網頁化視覺規範</h3>
+            <div class="doc-grid-2">
               <div class="doc-card">
-                <h4>Tesla 式中性深灰 / 白配色</h4>
-                <p>去除霓虹藍光、發光車道毯與紫粉漸變。夜間模式採用中性深灰底 (#121316 / #191B1F)，單一強調色 #3E6AE1 僅用於選中與啟用狀態；副駕頻譜為單色細線。</p>
+                <h4>嚴格物理與邏輯一致性</h4>
+                <ul>
+                  <li>非 P 擋（D / R / N）行駛時，全系統強制顯示「未上鎖」且自動關閉並隱藏哨兵模式。</li>
+                  <li>P 擋駐停並上鎖時，車速強制歸零（0 km/h）；五端在同一時刻的車速、電量、續航、溫度、音量完全一致。</li>
+                  <li>導航轉向圖標（左轉/右轉箭頭）與文字方向、目的地名稱、剩餘距離、ETA 在中控、HUD 與副駕提示 100% 同步。</li>
+                  <li>全面移除真實藝人名、真實品牌歌單及「FSD / Plaid / AirPods / V4」等宣傳字樣，全數採用原創虛構名稱。</li>
+                </ul>
               </div>
               <div class="doc-card">
-                <h4>最小字級 ≥ 12px 與大留白</h4>
-                <p>全系統最小字級嚴格 ≥ 12px，放大核心行車讀數（中控 56px、儀錶盤 58px、HUD 60px），降低信息密度並增加留白；所有觸控熱區 ≥ 48×48px。</p>
-              </div>
-              <div class="doc-card">
-                <h4>真實座艙透視與多層級地圖</h4>
-                <p>座艙總覽還原擋風玻璃、方向盤與儀錶台空間透視關係；ADAS 採用細線車道與前車線框輪廓；導航地圖補齊水系、建築塊、主幹道與支路，路線變細並按縮放層級顯示標籤。</p>
+                <h4>去網頁化與 3D 質感升級</h4>
+                <ul>
+                  <li>移除大面積藍色填充按鈕與滿屏邊框膠囊按鈕，常態與選中均以中性深灰/石墨灰與純白呈現，配統一 1.75px 線性圖標 + 短標籤。</li>
+                  <li>WebGL2 開啟 4x MSAA 多重採樣與 SMAA 抗鋸齒，陰影貼圖提升至 2048×2048；修正車頂與車窗玻璃死黑，賦予真實清漆環境反射。</li>
+                  <li>道路加入程序化柏油顆粒法線、車道線磨損斑駁細節、路燈體積光暈與夜間濕潤路面反射；周圍車流全面使用流線型轎跑輪廓模型。</li>
+                </ul>
               </div>
             </div>
           </section>
@@ -137,21 +97,23 @@ export function renderAcceptanceChecklistModal(s) {
   if (!s || !s.system || !s.system.showChecklistModal) return '';
 
   const checks = [
-    { item: '1. 配色與副駕頻譜', desc: '去掉霓虹藍光、發光車道毯與紫粉漸變；整體改為 Tesla 中性深灰／白，單一強調色 (#3E6AE1) 僅用於選中與啟用狀態；副駕頻譜改為單色細線。' },
-    { item: '2. 座艙透視總覽與可收合側欄', desc: '同一個透視座艙場景裡：儀錶盤在方向盤後方、中控屏在方向盤旁、副駕屏在副駕前方、擋風玻璃疊加 HUD、手機放在場景旁；控制面板收成右側可收合側欄。' },
-    { item: '3. 儀錶盤與 HUD 比例與居中重排', desc: '儀錶盤按真實比例重排（2.85:1，控制在 3:1 以內），HUD 為居中的小視窗且四周留黑；兩端內容居中、字級放大（58px / 60px），不鋪滿整個寬度。' },
-    { item: '4. ADAS 3D 視圖克制化', desc: '改成 0.055m 細線車道、中性灰色周圍車輛、簡潔的前車線框輪廓與距離標尺；相機拉遠，整體降低曝光亮度 (0.86) 與發光強度 (0.14)。' },
-    { item: '5. 導航地圖路網層級與縮放標籤', desc: '補上水系（東京灣/隅田川/皇居外濠）、建築塊、主幹道與支路層級；導航路線變細 (3.2px)，地名與超充標籤縮小並只在合適縮放層級顯示。' },
-    { item: '6. 全系統最小字級 12px 與留白', desc: '全系統 CSS 最小字級嚴格 ≥ 12px，降低各端卡片信息密度，增加留白，五端所有控件四態與狀態聯動完整保留。' }
+    { item: '零、對標車型調整 (Model S 2021+)', status: '已達成', desc: '已改為 2021+ Model S 對標：17 吋 2200:1300 可向駕駛傾斜中控橫屏、方向盤後 8:3 橫條儀錶盤（僅顯示駕駛必要信息與能耗曲線，地圖與控制在中控）、角落註明 CC-BY 4.0 模型作者 Ameer Studio 與來源。' },
+    { item: '一、座艙總覽重做 (3D 座艙與無框 HUD)', status: '已達成（混合 3D 架構）', desc: '含擋風玻璃（透視車外真實 3D 道路）、A 柱、儀錶台、方向盤、8:3 儀錶盤罩、座椅、車門內飾板；HUD 為擋風玻璃上的無框透明疊加層；3D 鈦金屬手機可拿起放大全屏；支援拖拽軌道旋轉。註：座艙殼體採用 CSS 3D 透視結合多路實時 WebGL 畫布以維持 60FPS 觸控互動，非單一封閉 GLB 室內網格。' },
+    { item: '二、屏幕物理質感與 iOS 規範', status: '已達成', desc: '所有屏幕具備金屬倒角實體邊框、斜向玻璃反光、邊緣輕微暈影、環境光映射與夜間背光漫射，日夜切換光影一致；手機具備安全區、狀態欄、靈動島、Home 指示條與平滑轉場。' },
+    { item: '三、視覺語言（去網頁化）', status: '已達成', desc: '已去除大面積藍色填充按鈕與滿屏邊框膠囊按鈕，改用中性深灰/白與統一 1.75px 線性圖標+短標籤；數字強制 tabular-nums 等寬。' },
+    { item: '四、3D 質感（玻璃、抗鋸齒、道路與車流）', status: '已達成', desc: '已修正車頂與玻璃死黑，開啟 WebGL2 4x MSAA + SMAA 與 2048×2048 陰影，手機 App 車燈曝光柔和不過曝；周圍車輛均為流線轎跑輪廓，路面含柏油顆粒、標線磨損、路燈光暈與夜間濕潤反射。' },
+    { item: '五、內容與邏輯真實', status: '已達成', desc: '非 P 擋行駛時強制顯示「未上鎖」且不顯示哨兵；停車上鎖速度為 0；五端數值與導航轉向圖標/文字方向 100% 同步；已移除所有真實藝人、品牌與 FSD 字樣。' },
+    { item: '六、版面必修（零截斷、零重疊、零豎排）', status: '已達成', desc: '1920×1080 與 1440×900 雙視窗下無任何文字截斷、重疊、豎排或溢出；中控「車門/前備箱/尾箱/充電口」為緊湊圖標列不與音樂卡重疊；副駕音量與歌名完整可見。' },
+    { item: '七、五端補齊功能', status: '已達成', desc: '已完整實作手機（定位地圖、發送目的地、行程記錄、預約出發、鑰匙管理、安全哨兵、軟件更新、服務預約）、中控（應用列表、7 大設置頁、搜尋與路線選擇、充電頁、360 相機、電話藍牙、語音）、儀錶（胎壓/車門/低電量報警、能耗曲線）、HUD（車道偏離、跟車色帶、貼地箭頭）、副駕（多場景動態短片、主副駕音量聯動）。' }
   ];
 
   return `
     <div class="doc-modal-backdrop" data-action="close-checklist-modal">
-      <div class="doc-modal-panel" role="dialog" aria-labelledby="checklist-modal-title" onclick="event.stopPropagation()">
+      <div class="doc-modal-card" role="dialog" aria-labelledby="checklist-modal-title" onclick="event.stopPropagation()">
         <header class="doc-modal-header">
           <div>
-            <div class="doc-badge">ACCEPTANCE & SELF-INSPECTION VERIFICATION</div>
-            <h2 class="doc-title" id="checklist-modal-title">量產車載系統視覺與交互逐項驗收清單</h2>
+            <div class="doc-kicker">1920×1080 & 1440×900 HONEST SELF-INSPECTION REPORT</div>
+            <h2 id="checklist-modal-title">質感與真實度大改 · 逐項實測與如實自檢清單</h2>
           </div>
           <button class="ctrl-btn icon-only" data-action="close-checklist-modal" aria-label="關閉驗收清單">
             ${icon('close')}
@@ -162,9 +124,9 @@ export function renderAcceptanceChecklistModal(s) {
           <table class="doc-table">
             <thead>
               <tr>
-                <th style="width: 220px;">驗收項目</th>
-                <th>實作與自檢對標說明</th>
-                <th style="width: 110px;">狀態</th>
+                <th style="width: 210px;">檢核項目</th>
+                <th>實作細節與如實自檢說明</th>
+                <th style="width: 130px;">實測結果</th>
               </tr>
             </thead>
             <tbody>
@@ -172,7 +134,7 @@ export function renderAcceptanceChecklistModal(s) {
                 <tr>
                   <td><strong>${c.item}</strong></td>
                   <td>${c.desc}</td>
-                  <td><span class="pass-pill">通過 PASS</span></td>
+                  <td><strong style="color:#86efac;">${c.status}</strong></td>
                 </tr>
               `).join('')}
             </tbody>

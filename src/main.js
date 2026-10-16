@@ -1,10 +1,10 @@
 /**
- * TESLA COCKPIT HMI — APPLICATION ENTRY POINT
+ * TESLA MODEL S (2021+ REFRESH) COCKPIT HMI — APPLICATION ENTRY POINT
  */
-import { vehicleStore } from './state/vehicleStore.js?v=15';
-import { SceneEngine } from './engine/SceneEngine.js?v=15';
-import { MapAndMediaEngine } from './engine/MapAndMediaCanvas.js?v=15';
-import { CockpitApp } from './ui/CockpitApp.js?v=15';
+import { vehicleStore } from './state/vehicleStore.js?v=30';
+import { SceneEngine } from './engine/SceneEngine.js?v=30';
+import { MapAndMediaEngine } from './engine/MapAndMediaCanvas.js?v=30';
+import { CockpitApp } from './ui/CockpitApp.js?v=30';
 
 function bootstrapHMI() {
   const rootEl = document.getElementById('app');

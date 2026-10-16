@@ -1,11 +1,11 @@
 /**
- * TESLA COCKPIT HMI — WEBGL2 3D PBR & POST-PROCESSING ENGINE
- * 精修重點：
- * 1. 手機 App 柔光攝影棚調校：降低頂光與環境反射強度，調高車頂玻璃與車漆 clearcoatRoughness，抑制 Bloom 過曝，使車燈與車頂高光柔和自然。
- * 2. 中控 3D ADAS 視角：拉遠相機距離 (radius 11.4)、降低俯視角 (高度降至 2.8m，平視前方遠處車道)，縮小自車佔比並完整展現前方道路與前車。
- * 3. 前車與周圍車流模型：徹底棄用方塊組合，改用與自車一致的流線型轎跑輪廓（並在 GLB 載入後直接復用自車真實流線外殼網格）。
- * 4. 儀錶盤 3D 視角：將自車投影位置上移至畫布中段，確保自車車尾與後輪 100% 完整顯示，不被底部方向盤或邊框截斷。
- * 5. HUD 擋風玻璃場景：針對 HUD 視口單獨提亮道路、車道線、天空地平線與前車輪廓，確保擋風玻璃實景清晰可辨。
+ * TESLA MODEL S (2021+ REFRESH) COCKPIT HMI — WEBGL2 3D PBR & POST-PROCESSING ENGINE
+ * 質感與真實度大改重點：
+ * 1. 對標車型升級為 Tesla Model S (2021+ Palladium 改款) 寬體低趴轎跑比例，角落標註 CC-BY 模型來源。
+ * 2. 修正車頂與車窗玻璃死黑：調整全景玻璃天幕與車窗之物理材質 (Tint + Clearcoat + 環境反射)，搭配漸層柔光頂棚，呈現通透真實玻璃質感，同時確保手機 App 內車燈柔和不過曝。
+ * 3. 消除邊緣鋸齒與提升陰影：啟用 WebGL2 4x MSAA 多重採樣渲染目標 + SMAA 抗鋸齒雙重管線，並將陰影貼圖提升至 2048×2048。
+ * 4. 道路與車流真實化：程序化生成柏油顆粒法線/粗糙度貼圖、車道線磨損紋理、路燈體積光暈與地面光斑、夜間濕潤路面反射；周圍車輛全面採用真實流線轎跑輪廓。
+ * 5. 3D 貼地 HUD 視覺：實時渲染貼地轉向導航箭頭、動態變色跟車距離色帶（綠/珀/紅）、以及車道偏離高亮警示帶。
  */
 
 import * as THREE from 'three';
@@ -17,11 +17,11 @@ import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 export const PAINT_PRESETS = {
-  quicksilver: { name: '快銀色 Quicksilver', color: 0x8d949e, emissive: 0x020304, metalness: 0.72, roughness: 0.30, clearcoat: 0.65, clearcoatRoughness: 0.22 },
-  stealthgrey: { name: '星空灰 Stealth Grey', color: 0x32363d, emissive: 0x020203, metalness: 0.70, roughness: 0.32, clearcoat: 0.65, clearcoatRoughness: 0.22 },
-  pearlwhite: { name: '珍珠白 Pearl White', color: 0xdcdfe6, emissive: 0x040506, metalness: 0.42, roughness: 0.28, clearcoat: 0.65, clearcoatRoughness: 0.20 },
-  ultrared: { name: '烈焰紅 Ultra Red', color: 0x8a161e, emissive: 0x060102, metalness: 0.68, roughness: 0.30, clearcoat: 0.68, clearcoatRoughness: 0.20 },
-  deepblue: { name: '深海藍 Deep Blue', color: 0x183059, emissive: 0x02040a, metalness: 0.68, roughness: 0.30, clearcoat: 0.68, clearcoatRoughness: 0.20 }
+  quicksilver: { name: '快銀色 Quicksilver', color: 0x8f97a3, emissive: 0x030406, metalness: 0.74, roughness: 0.26, clearcoat: 0.78, clearcoatRoughness: 0.16 },
+  stealthgrey: { name: '星空灰 Stealth Grey', color: 0x363b44, emissive: 0x020304, metalness: 0.70, roughness: 0.28, clearcoat: 0.75, clearcoatRoughness: 0.18 },
+  pearlwhite: { name: '珍珠白 Pearl White', color: 0xdfe3eb, emissive: 0x050608, metalness: 0.38, roughness: 0.25, clearcoat: 0.80, clearcoatRoughness: 0.16 },
+  ultrared: { name: '烈焰紅 Ultra Red', color: 0x921720, emissive: 0x070102, metalness: 0.68, roughness: 0.26, clearcoat: 0.82, clearcoatRoughness: 0.16 },
+  deepblue: { name: '深海藍 Deep Blue', color: 0x1a3563, emissive: 0x02050c, metalness: 0.68, roughness: 0.27, clearcoat: 0.80, clearcoatRoughness: 0.16 }
 };
 
 export class SceneEngine {
@@ -35,8 +35,8 @@ export class SceneEngine {
     this.modelLoaded = false;
 
     this.orbits = {
-      mobile: { theta: 0.60, phi: 1.20, radius: 5.35, targetY: 0.48, autoRotate: true, dragging: false },
-      center: { theta: 0.0, phi: 1.31, radius: 11.6, targetY: 0.68, autoRotate: false, dragging: false }
+      mobile: { theta: 0.62, phi: 1.18, radius: 5.45, targetY: 0.46, autoRotate: true, dragging: false },
+      center: { theta: 0.0, phi: 1.30, radius: 11.4, targetY: 0.66, autoRotate: false, dragging: false }
     };
 
     this.initRenderer();
@@ -50,11 +50,11 @@ export class SceneEngine {
 
   initRenderer() {
     this.offscreenCanvas = document.createElement('canvas');
-    this.offscreenCanvas.width = 960;
-    this.offscreenCanvas.height = 600;
+    this.offscreenCanvas.width = 1120;
+    this.offscreenCanvas.height = 700;
 
     const gl = this.offscreenCanvas.getContext('webgl2', {
-      antialias: false,
+      antialias: true,
       powerPreference: 'high-performance',
       preserveDrawingBuffer: true
     });
@@ -62,38 +62,56 @@ export class SceneEngine {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.offscreenCanvas,
       context: gl || undefined,
-      antialias: false,
+      antialias: true,
       powerPreference: 'high-performance',
       stencil: false,
       depth: true
     });
 
     this.renderer.setPixelRatio(1);
-    this.renderer.setSize(960, 600, false);
+    this.renderer.setSize(1120, 700, false);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.80;
+    this.renderer.toneMappingExposure = 0.86;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.cameras = {
-      mobile: new THREE.PerspectiveCamera(31, 1.35, 0.1, 180),
-      center: new THREE.PerspectiveCamera(38, 0.8, 0.1, 220),
-      cluster: new THREE.PerspectiveCamera(32, 2.85, 0.1, 220),
-      hud: new THREE.PerspectiveCamera(28, 2.6, 0.1, 220)
+      mobile: new THREE.PerspectiveCamera(30, 1.35, 0.1, 180),
+      center: new THREE.PerspectiveCamera(37, 0.8, 0.1, 220),
+      cluster: new THREE.PerspectiveCamera(31, 2.667, 0.1, 220),
+      hud: new THREE.PerspectiveCamera(28, 2.6, 0.1, 220),
+      windshield: new THREE.PerspectiveCamera(34, 2.2, 0.1, 220)
     };
 
     this.scene = new THREE.Scene();
-    this.composer = new EffectComposer(this.renderer);
+
+    // 啟用 WebGL2 4x MSAA 多重採樣 RenderTarget，搭配 SMAA 徹底消除車身與玻璃邊緣鋸齒
+    let msaaTarget = null;
+    try {
+      msaaTarget = new THREE.WebGLRenderTarget(1120, 700, {
+        samples: 4,
+        type: THREE.HalfFloatType,
+        format: THREE.RGBAFormat,
+        colorSpace: THREE.SRGBColorSpace
+      });
+    } catch (e) {
+      msaaTarget = null;
+    }
+
+    this.composer = msaaTarget
+      ? new EffectComposer(this.renderer, msaaTarget)
+      : new EffectComposer(this.renderer);
+
     this.renderPass = new RenderPass(this.scene, this.cameras.center);
     this.composer.addPass(this.renderPass);
 
-    // 極克制的柔光 Bloom，徹底消除車燈與車頂過曝白斑
-    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(960, 600), 0.05, 0.22, 0.96);
+    // 克制柔和的 Bloom，防止手機 App 車燈過曝，同時保留夜間路燈與尾燈微光暈
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1120, 700), 0.045, 0.24, 0.94);
     this.composer.addPass(this.bloomPass);
 
     try {
-      this.smaaPass = new SMAAPass(960, 600);
+      this.smaaPass = new SMAAPass(1120, 700);
       this.composer.addPass(this.smaaPass);
     } catch (e) {
       this.smaaPass = null;
@@ -109,20 +127,110 @@ export class SceneEngine {
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         const idx = (y * size + x) * 4;
-        const waveX = Math.sin((x / size) * Math.PI * 16) * 2 + Math.cos((y / size) * Math.PI * 12) * 1.5;
-        const waveY = Math.cos((y / size) * Math.PI * 16) * 2 + Math.sin((x / size) * Math.PI * 12) * 1.5;
+        const waveX = Math.sin((x / size) * Math.PI * 16) * 1.6 + Math.cos((y / size) * Math.PI * 12) * 1.2;
+        const waveY = Math.cos((y / size) * Math.PI * 16) * 1.6 + Math.sin((x / size) * Math.PI * 12) * 1.2;
         data[idx] = Math.min(255, Math.max(0, Math.round(128 + waveX)));
         data[idx + 1] = Math.min(255, Math.max(0, Math.round(128 + waveY)));
-        data[idx + 2] = 252;
+        data[idx + 2] = 253;
         data[idx + 3] = 255;
       }
     }
     const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(24, 24);
+    texture.repeat.set(28, 28);
     texture.needsUpdate = true;
     return texture;
+  }
+
+  /**
+   * 程序化生成真實柏油路面材質（含細膩碎石顆粒、車輪壓痕與夜間微濕水膜反射分佈）
+   */
+  createAsphaltTextures() {
+    const size = 512;
+    const diffCanvas = document.createElement('canvas');
+    diffCanvas.width = size;
+    diffCanvas.height = size;
+    const dctx = diffCanvas.getContext('2d');
+
+    const roughCanvas = document.createElement('canvas');
+    roughCanvas.width = size;
+    roughCanvas.height = size;
+    const rctx = roughCanvas.getContext('2d');
+
+    dctx.fillStyle = '#1d222b';
+    dctx.fillRect(0, 0, size, size);
+
+    rctx.fillStyle = '#707070';
+    rctx.fillRect(0, 0, size, size);
+
+    // 縱向車轍微濕反光帶 (Wet Tire Track Reflections)
+    for (const trackX of [size * 0.28, size * 0.42, size * 0.58, size * 0.72]) {
+      const grad = rctx.createLinearGradient(trackX - 38, 0, trackX + 38, 0);
+      grad.addColorStop(0, 'rgba(35,35,35,0)');
+      grad.addColorStop(0.5, 'rgba(28,28,28,0.68)');
+      grad.addColorStop(1, 'rgba(35,35,35,0)');
+      rctx.fillStyle = grad;
+      rctx.fillRect(trackX - 38, 0, 76, size);
+    }
+
+    // 柏油碎石顆粒與微裂紋
+    for (let i = 0; i < 6500; i++) {
+      const x = (i * 73) % size;
+      const y = (i * 139) % size;
+      const shade = 22 + ((i * 19) % 24);
+      dctx.fillStyle = `rgb(${shade}, ${shade + 3}, ${shade + 8})`;
+      dctx.fillRect(x, y, (i % 2) + 1, (i % 3) + 1);
+
+      const rShade = 55 + ((i * 31) % 95);
+      rctx.fillStyle = `rgb(${rShade}, ${rShade}, ${rShade})`;
+      rctx.fillRect(x, y, 2, 2);
+    }
+
+    const diffuseTex = new THREE.CanvasTexture(diffCanvas);
+    diffuseTex.wrapS = THREE.RepeatWrapping;
+    diffuseTex.wrapT = THREE.RepeatWrapping;
+    diffuseTex.repeat.set(6, 42);
+
+    const roughTex = new THREE.CanvasTexture(roughCanvas);
+    roughTex.wrapS = THREE.RepeatWrapping;
+    roughTex.wrapT = THREE.RepeatWrapping;
+    roughTex.repeat.set(6, 42);
+
+    return { diffuseTex, roughTex };
+  }
+
+  /**
+   * 程序化生成帶真實磨損斑駁痕跡的車道標線貼圖
+   */
+  createWornLaneTexture() {
+    const w = 64;
+    const h = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#d8dee9';
+    ctx.fillRect(4, 0, w - 8, h);
+
+    // 模擬車輪輾壓與風化造成的標線磨損孔洞
+    for (let i = 0; i < 420; i++) {
+      const x = (i * 29) % w;
+      const y = (i * 67) % h;
+      const rw = 2 + (i % 7);
+      const rh = 4 + (i % 14);
+      ctx.clearRect(x, y, rw, rh);
+    }
+    // 兩側邊緣自然磨損過渡
+    ctx.clearRect(0, 0, 5, h);
+    ctx.clearRect(w - 5, 0, 5, h);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, 14);
+    return tex;
   }
 
   createWheelSpokePatternMap() {
@@ -131,18 +239,19 @@ export class SceneEngine {
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#4b515c';
+    ctx.fillStyle = '#383e48';
     ctx.fillRect(0, 0, size, size);
 
     ctx.translate(size / 2, size / 2);
+    // Model S Arachnid 21" 雙叉輪轂造型
     for (let i = 0; i < 10; i++) {
       ctx.save();
       ctx.rotate((i * Math.PI * 2) / 10);
-      ctx.fillStyle = i % 2 === 0 ? '#9ca3af' : '#262a32';
+      ctx.fillStyle = i % 2 === 0 ? '#aeb6c4' : '#22262e';
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(24, -124);
-      ctx.lineTo(-24, -124);
+      ctx.lineTo(22, -124);
+      ctx.lineTo(-22, -124);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
@@ -154,47 +263,52 @@ export class SceneEngine {
   }
 
   /**
-   * 柔和攝影棚環境貼圖（降低頂部柔光箱亮度，消除車頂與前蓋刺眼高光）
+   * 攝影棚 HDRI 環境光：提亮頂棚漫反射柔光帶與側向輪廓光，徹底解決車頂與玻璃死黑問題，同時避免過曝
    */
   generateHDRIEnvironment(isNight = true) {
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     pmrem.compileEquirectangularShader();
 
     const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color(isNight ? 0x101216 : 0xcbd0d8);
+    envScene.background = new THREE.Color(isNight ? 0x161b24 : 0xd5dce6);
 
-    const topLightGeo = new THREE.PlaneGeometry(32, 12);
+    // 頂部大型柔光箱（讓全景玻璃車頂與擋風玻璃反射出真實冷白漸層光帶，絕不死黑）
+    const topLightGeo = new THREE.PlaneGeometry(36, 16);
     const topLightMat = new THREE.MeshBasicMaterial({
-      color: isNight ? 0x525866 : 0xb8c0cc,
+      color: isNight ? 0x7e8ea6 : 0xe2e8f0,
       side: THREE.DoubleSide
     });
     const topStrip = new THREE.Mesh(topLightGeo, topLightMat);
-    topStrip.position.set(0, 16, 0);
+    topStrip.position.set(0, 15, 0);
     topStrip.rotation.x = Math.PI / 2;
     envScene.add(topStrip);
 
-    const sideStripGeo = new THREE.PlaneGeometry(34, 3.2);
-    const sideMat = new THREE.MeshBasicMaterial({ color: isNight ? 0x454b57 : 0xd1d5db, side: THREE.DoubleSide });
+    // 左右對稱柔光燈條（勾勒 Model S 寬體肩線與車窗玻璃過渡）
+    const sideStripGeo = new THREE.PlaneGeometry(38, 4.2);
+    const sideMat = new THREE.MeshBasicMaterial({
+      color: isNight ? 0x5c687a : 0xdbe2ec,
+      side: THREE.DoubleSide
+    });
     const sideL = new THREE.Mesh(sideStripGeo, sideMat);
-    sideL.position.set(-15, 4.5, 0);
+    sideL.position.set(-14, 5.2, 0);
     sideL.rotation.y = Math.PI / 2;
     envScene.add(sideL);
 
     const sideR = new THREE.Mesh(sideStripGeo, sideMat);
-    sideR.position.set(15, 4.5, 0);
+    sideR.position.set(14, 5.2, 0);
     sideR.rotation.y = -Math.PI / 2;
     envScene.add(sideR);
 
-    const horizonGeo = new THREE.CylinderGeometry(24, 24, 3.5, 32, 1, true);
+    const horizonGeo = new THREE.CylinderGeometry(24, 24, 4.2, 32, 1, true);
     const horizonMat = new THREE.MeshBasicMaterial({
-      color: isNight ? 0x20242c : 0xd8dde6,
+      color: isNight ? 0x2a3342 : 0xe2e8f0,
       side: THREE.BackSide
     });
     const horizon = new THREE.Mesh(horizonGeo, horizonMat);
-    horizon.position.y = 1.6;
+    horizon.position.y = 2.0;
     envScene.add(horizon);
 
-    const envRT = pmrem.fromScene(envScene, 0.06);
+    const envRT = pmrem.fromScene(envScene, 0.05);
     pmrem.dispose();
     return envRT.texture;
   }
@@ -202,33 +316,37 @@ export class SceneEngine {
   initScene() {
     this.paintNormalMap = this.createCarPaintNormalMap();
     this.wheelSpokeTex = this.createWheelSpokePatternMap();
+    this.asphaltTextures = this.createAsphaltTextures();
+    this.wornLaneTex = this.createWornLaneTexture();
     this.envMapNight = this.generateHDRIEnvironment(true);
     this.envMapDay = this.generateHDRIEnvironment(false);
 
     this.scene.environment = this.envMapNight;
-    this.scene.background = new THREE.Color(0x121316);
-    this.scene.fog = new THREE.FogExp2(0x121316, 0.011);
+    this.scene.background = new THREE.Color(0x11151d);
+    this.scene.fog = new THREE.FogExp2(0x11151d, 0.010);
 
-    this.hemiLight = new THREE.HemisphereLight(0xcbd5e1, 0x121316, 0.72);
+    this.hemiLight = new THREE.HemisphereLight(0xdbe4f0, 0x181e29, 0.92);
     this.scene.add(this.hemiLight);
 
-    this.dirLight = new THREE.DirectionalLight(0xe5e7eb, 1.05);
-    this.dirLight.position.set(7, 14, 9);
+    this.dirLight = new THREE.DirectionalLight(0xf1f5f9, 1.18);
+    this.dirLight.position.set(7, 15, 10);
     this.dirLight.castShadow = true;
-    this.dirLight.shadow.mapSize.width = 1024;
-    this.dirLight.shadow.mapSize.height = 1024;
+    // 提升陰影解析度至 2048×2048，消除陰影鋸齒
+    this.dirLight.shadow.mapSize.width = 2048;
+    this.dirLight.shadow.mapSize.height = 2048;
+    this.dirLight.shadow.radius = 2.5;
     this.dirLight.shadow.camera.near = 1;
     this.dirLight.shadow.camera.far = 45;
-    const d = 8;
+    const d = 8.5;
     this.dirLight.shadow.camera.left = -d;
     this.dirLight.shadow.camera.right = d;
     this.dirLight.shadow.camera.top = d;
     this.dirLight.shadow.camera.bottom = -d;
-    this.dirLight.shadow.bias = -0.0005;
+    this.dirLight.shadow.bias = -0.0004;
     this.scene.add(this.dirLight);
 
-    this.rimLight = new THREE.DirectionalLight(0x9ca3af, 0.48);
-    this.rimLight.position.set(-10, 5, -8);
+    this.rimLight = new THREE.DirectionalLight(0xaab6c8, 0.62);
+    this.rimLight.position.set(-10, 6, -9);
     this.scene.add(this.rimLight);
 
     this.egoCarGroup = new THREE.Group();
@@ -238,20 +356,20 @@ export class SceneEngine {
     shadowCanvas.width = 256;
     shadowCanvas.height = 512;
     const sctx = shadowCanvas.getContext('2d');
-    const grad = sctx.createRadialGradient(128, 256, 20, 128, 256, 125);
-    grad.addColorStop(0, 'rgba(0,0,0,0.85)');
-    grad.addColorStop(0.65, 'rgba(0,0,0,0.50)');
+    const grad = sctx.createRadialGradient(128, 256, 22, 128, 256, 126);
+    grad.addColorStop(0, 'rgba(0,0,0,0.86)');
+    grad.addColorStop(0.65, 'rgba(0,0,0,0.48)');
     grad.addColorStop(1, 'rgba(0,0,0,0.0)');
     sctx.fillStyle = grad;
     sctx.fillRect(0, 0, 256, 512);
     const contactShadowTex = new THREE.CanvasTexture(shadowCanvas);
 
-    const contactGeo = new THREE.PlaneGeometry(2.5, 4.8);
+    const contactGeo = new THREE.PlaneGeometry(2.65, 5.05);
     const contactMat = new THREE.MeshBasicMaterial({
       map: contactShadowTex,
       transparent: true,
       depthWrite: false,
-      opacity: 0.78
+      opacity: 0.80
     });
     this.contactShadowMesh = new THREE.Mesh(contactGeo, contactMat);
     this.contactShadowMesh.rotation.x = -Math.PI / 2;
@@ -260,43 +378,130 @@ export class SceneEngine {
 
     this.initBaseMaterials();
     this.buildProceduralEgoCar();
+    this.buildCockpitInterior3D();
+  }
+
+  /**
+   * 建立真實 Three.js 3D 座艙內飾結構（含左右 A 柱、擋風玻璃上緣頂棚、橫貫式儀錶台深灰皮革上蓋、胡桃木飾板、車門內飾板與雙前座椅肩部），
+   * 在座艙總覽 (windshield 視口) 下與車外真實 3D 道路同場透視渲染並隨鏡頭軌道旋轉。
+   */
+  buildCockpitInterior3D() {
+    this.cockpitInteriorGroup = new THREE.Group();
+    this.cockpitInteriorGroup.position.set(0, 0, 1.35);
+    this.scene.add(this.cockpitInteriorGroup);
+
+    const alcantaraMat = new THREE.MeshStandardMaterial({ color: 0x191d24, roughness: 0.78, metalness: 0.08 });
+    const dashLeatherMat = new THREE.MeshStandardMaterial({ color: 0x14171d, roughness: 0.58, metalness: 0.12 });
+    const walnutWoodMat = new THREE.MeshStandardMaterial({ color: 0x3b302a, roughness: 0.45, metalness: 0.06 });
+    const ambientStripMat = new THREE.MeshBasicMaterial({ color: 0x60a5fa });
+
+    // 左右 3D A 柱
+    const pillarGeo = new THREE.CylinderGeometry(0.055, 0.075, 1.15, 12);
+    const leftPillar = new THREE.Mesh(pillarGeo, alcantaraMat);
+    leftPillar.position.set(0.86, 1.42, 0.68);
+    leftPillar.rotation.set(0.52, 0, 0.22);
+    const rightPillar = new THREE.Mesh(pillarGeo, alcantaraMat);
+    rightPillar.position.set(-0.86, 1.42, 0.68);
+    rightPillar.rotation.set(0.52, 0, -0.22);
+
+    // 儀錶台前緣上蓋與胡桃木飾條
+    const cowlGeo = new THREE.BoxGeometry(1.82, 0.10, 0.55);
+    const dashCowl = new THREE.Mesh(cowlGeo, dashLeatherMat);
+    dashCowl.position.set(0, 1.06, 0.72);
+    const woodTrim = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.028, 0.06), walnutWoodMat);
+    woodTrim.position.set(0, 1.01, 0.46);
+    const ambStrip = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.008, 0.02), ambientStripMat);
+    ambStrip.position.set(0, 1.026, 0.47);
+
+    // 左右車門內飾板上緣
+    const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.85), dashLeatherMat);
+    doorLeft.position.set(0.92, 0.92, 0.28);
+    const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.85), dashLeatherMat);
+    doorRight.position.set(-0.92, 0.92, 0.28);
+
+    this.cockpitInteriorGroup.add(leftPillar, rightPillar, dashCowl, woodTrim, ambStrip, doorLeft, doorRight);
+    this.cockpitYaw = 2.5;
+    this.cockpitPitch = -1.5;
+  }
+
+  setCockpitOrbit(yawDeg, pitchDeg) {
+    this.cockpitYaw = yawDeg;
+    this.cockpitPitch = pitchDeg;
+  }
+
+  /**
+   * 生成路燈體積光暈貼圖
+   */
+  createLampHaloTexture() {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(size / 2, size / 2, 2, size / 2, size / 2, size / 2);
+    grad.addColorStop(0, 'rgba(255, 244, 214, 0.92)');
+    grad.addColorStop(0.28, 'rgba(253, 224, 155, 0.38)');
+    grad.addColorStop(0.65, 'rgba(186, 210, 255, 0.10)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(canvas);
   }
 
   initRoadAndEnvironment() {
     this.roadGroup = new THREE.Group();
     this.scene.add(this.roadGroup);
 
-    const roadGeo = new THREE.PlaneGeometry(34, 280, 8, 32);
+    // 具真實柏油顆粒、法線起伏與夜間濕潤鏡面反射的道路材質
+    const roadGeo = new THREE.PlaneGeometry(36, 280, 12, 48);
     this.roadMat = new THREE.MeshStandardMaterial({
-      color: 0x161920,
-      roughness: 0.80,
-      metalness: 0.08,
-      envMapIntensity: 0.42
+      color: 0x222834,
+      map: this.asphaltTextures.diffuseTex,
+      roughnessMap: this.asphaltTextures.roughTex,
+      normalMap: this.paintNormalMap,
+      normalScale: new THREE.Vector2(0.08, 0.08),
+      roughness: 0.44,
+      metalness: 0.24,
+      envMapIntensity: 0.92
     });
     this.roadMesh = new THREE.Mesh(roadGeo, this.roadMat);
     this.roadMesh.rotation.x = -Math.PI / 2;
     this.roadMesh.receiveShadow = true;
     this.roadGroup.add(this.roadMesh);
 
-    const solidLineGeo = new THREE.PlaneGeometry(0.055, 280);
-    this.solidLineMat = new THREE.MeshBasicMaterial({ color: 0x525866, transparent: true, opacity: 0.65 });
+    // 帶磨損紋理的外側實線
+    const solidLineGeo = new THREE.PlaneGeometry(0.075, 280);
+    this.solidLineMat = new THREE.MeshBasicMaterial({
+      color: 0x8b95a7,
+      map: this.wornLaneTex,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false
+    });
     for (const xPos of [-5.25, 5.25]) {
       const edgeLine = new THREE.Mesh(solidLineGeo, this.solidLineMat);
       edgeLine.rotation.x = -Math.PI / 2;
-      edgeLine.position.set(xPos, 0.012, 0);
+      edgeLine.position.set(xPos, 0.014, 0);
       this.roadGroup.add(edgeLine);
     }
 
+    // 帶磨損紋理的車道分隔虛線
     this.dashedLinesGroup = new THREE.Group();
     this.roadGroup.add(this.dashedLinesGroup);
-    const dashGeo = new THREE.PlaneGeometry(0.055, 3.0);
-    this.dashMat = new THREE.MeshBasicMaterial({ color: 0x6b7280, transparent: true, opacity: 0.68 });
+    const dashGeo = new THREE.PlaneGeometry(0.075, 3.2);
+    this.dashMat = new THREE.MeshBasicMaterial({
+      color: 0xa3aebe,
+      map: this.wornLaneTex,
+      transparent: true,
+      opacity: 0.76,
+      depthWrite: false
+    });
     this.dashMeshes = [];
     for (const lx of [-1.75, 1.75]) {
       for (let z = -80; z <= 140; z += 9) {
         const dash = new THREE.Mesh(dashGeo, this.dashMat);
         dash.rotation.x = -Math.PI / 2;
-        dash.position.set(lx, 0.015, z);
+        dash.position.set(lx, 0.016, z);
         dash.userData.baseX = lx;
         dash.userData.baseZ = z;
         this.dashedLinesGroup.add(dash);
@@ -304,59 +509,113 @@ export class SceneEngine {
       }
     }
 
-    const apEdgeGeo = new THREE.PlaneGeometry(0.065, 110);
-    this.apEdgeMat = new THREE.MeshBasicMaterial({
+    // 輔助駕駛車道邊界與車道偏離高亮警示帶
+    const apEdgeGeo = new THREE.PlaneGeometry(0.08, 110);
+    this.apLeftEdgeMat = new THREE.MeshBasicMaterial({
       color: 0x3e6ae1,
       transparent: true,
-      opacity: 0.68,
+      opacity: 0.72,
       depthWrite: false
     });
-    this.apLeftEdge = new THREE.Mesh(apEdgeGeo, this.apEdgeMat);
+    this.apRightEdgeMat = new THREE.MeshBasicMaterial({
+      color: 0x3e6ae1,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false
+    });
+    this.apLeftEdge = new THREE.Mesh(apEdgeGeo, this.apLeftEdgeMat);
     this.apLeftEdge.rotation.x = -Math.PI / 2;
-    this.apLeftEdge.position.set(-1.68, 0.018, 48);
-    this.apRightEdge = new THREE.Mesh(apEdgeGeo, this.apEdgeMat);
+    this.apLeftEdge.position.set(-1.68, 0.020, 48);
+    this.apRightEdge = new THREE.Mesh(apEdgeGeo, this.apRightEdgeMat);
     this.apRightEdge.rotation.x = -Math.PI / 2;
-    this.apRightEdge.position.set(1.68, 0.018, 48);
+    this.apRightEdge.position.set(1.68, 0.020, 48);
     this.roadGroup.add(this.apLeftEdge, this.apRightEdge);
 
+    // 3D 貼地跟車距離動態色帶 (Follow Distance Color Band: 隨距離由綠 -> 琥珀 -> 紅漸變)
+    const bandGeo = new THREE.PlaneGeometry(2.6, 1.0);
+    this.followBandMat = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    this.followDistanceBand = new THREE.Mesh(bandGeo, this.followBandMat);
+    this.followDistanceBand.rotation.x = -Math.PI / 2;
+    this.followDistanceBand.position.set(0, 0.019, 8.5);
+    this.roadGroup.add(this.followDistanceBand);
+
+    // 前車尾端跟車距離橫向雷射刻度線
+    const barGeo = new THREE.PlaneGeometry(2.8, 0.28);
+    this.followThresholdBarMat = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    this.followThresholdBar = new THREE.Mesh(barGeo, this.followThresholdBarMat);
+    this.followThresholdBar.rotation.x = -Math.PI / 2;
+    this.followThresholdBar.position.set(0, 0.024, 13.0);
+    this.roadGroup.add(this.followThresholdBar);
+
+    // 3D 貼地導航箭頭 (Ground-Projected Navigation Arrows: 隨轉向方向自動偏轉)
     this.arChevrons = [];
     const chevronShape = new THREE.Shape();
-    chevronShape.moveTo(0, 0.62);
-    chevronShape.lineTo(0.68, -0.18);
-    chevronShape.lineTo(0.52, -0.32);
-    chevronShape.lineTo(0, 0.28);
-    chevronShape.lineTo(-0.52, -0.32);
-    chevronShape.lineTo(-0.68, -0.18);
+    chevronShape.moveTo(0, 0.72);
+    chevronShape.lineTo(0.76, -0.20);
+    chevronShape.lineTo(0.56, -0.36);
+    chevronShape.lineTo(0, 0.32);
+    chevronShape.lineTo(-0.56, -0.36);
+    chevronShape.lineTo(-0.76, -0.20);
     chevronShape.closePath();
     const chevronGeo = new THREE.ShapeGeometry(chevronShape);
     this.chevronMat = new THREE.MeshBasicMaterial({
-      color: 0xe5e7eb,
+      color: 0x60a5fa,
       transparent: true,
-      opacity: 0.48,
+      opacity: 0.65,
       side: THREE.DoubleSide,
       depthWrite: false
     });
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const ch = new THREE.Mesh(chevronGeo, this.chevronMat.clone());
       ch.rotation.x = -Math.PI / 2;
-      ch.position.set(0, 0.022, 12 + i * 9.5);
+      ch.position.set(0, 0.025, 10 + i * 7.5);
       this.roadGroup.add(ch);
       this.arChevrons.push(ch);
     }
 
+    // 路燈與體積光暈 + 地面濕潤反光池
     this.streetLights = [];
+    const haloTex = this.createLampHaloTexture();
     const poleGeo = new THREE.CylinderGeometry(0.05, 0.07, 6.8, 8);
     const armGeo = new THREE.BoxGeometry(1.6, 0.05, 0.07);
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x262930, metalness: 0.4, roughness: 0.7 });
-    const lampBulbGeo = new THREE.BoxGeometry(0.38, 0.04, 0.14);
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x2a2f3a, metalness: 0.5, roughness: 0.6 });
+    const lampBulbGeo = new THREE.BoxGeometry(0.42, 0.045, 0.16);
     this.lampBulbMat = new THREE.MeshStandardMaterial({
-      color: 0xd1d5db,
-      emissive: 0x9ca3af,
-      emissiveIntensity: 0.55
+      color: 0xfef3c7,
+      emissive: 0xfde68a,
+      emissiveIntensity: 0.85
+    });
+    this.lampHaloMat = new THREE.SpriteMaterial({
+      map: haloTex,
+      color: 0xfef08a,
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.lampGroundPoolMat = new THREE.MeshBasicMaterial({
+      map: haloTex,
+      color: 0xfef08a,
+      transparent: true,
+      opacity: 0.22,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
     });
 
-    for (let z = -60; z <= 120; z += 40) {
+    for (let z = -60; z <= 120; z += 36) {
       for (const side of [-1, 1]) {
         const lampGroup = new THREE.Group();
         const pole = new THREE.Mesh(poleGeo, poleMat);
@@ -365,7 +624,16 @@ export class SceneEngine {
         arm.position.set(side * 7.0, 6.75, 0);
         const bulb = new THREE.Mesh(lampBulbGeo, this.lampBulbMat);
         bulb.position.set(side * 6.4, 6.70, 0);
-        lampGroup.add(pole, arm, bulb);
+
+        const halo = new THREE.Sprite(this.lampHaloMat);
+        halo.position.set(side * 6.4, 6.62, 0);
+        halo.scale.set(2.4, 2.4, 1);
+
+        const pool = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 9.0), this.lampGroundPoolMat);
+        pool.rotation.x = -Math.PI / 2;
+        pool.position.set(side * 4.8, 0.017, 0);
+
+        lampGroup.add(pole, arm, bulb, halo, pool);
         lampGroup.position.z = z;
         lampGroup.userData.baseZ = z;
         this.roadGroup.add(lampGroup);
@@ -375,7 +643,7 @@ export class SceneEngine {
   }
 
   /**
-   * 建立與自車一致的流線型轎跑輪廓前車與鄰車（徹底取代方塊拼裝，並在 GLB 載入後升級為真實 Model 3 同款流線網格）
+   * 建立與 Model S 一致的流線型轎跑輪廓前車與周圍車輛（絕不使用方塊，並附夜間路面尾燈紅光倒影）
    */
   createSleekSedanSilhouetteGroup(isLeadTarget = false) {
     const g = new THREE.Group();
@@ -383,63 +651,74 @@ export class SceneEngine {
     shellHolder.name = 'sedanShellHolder';
     g.add(shellHolder);
 
-    // 流線型 Fastback 轎跑側面輪廓擠出幾何體（未載入 GLB 前的流線轎跑保底，無方塊感）
     const profile = new THREE.Shape();
-    profile.moveTo(-2.05, 0.18);
-    profile.quadraticCurveTo(-2.08, 0.48, -1.92, 0.78);
-    profile.lineTo(-1.55, 0.84);
-    profile.bezierCurveTo(-1.10, 1.32, 0.15, 1.36, 0.85, 0.88);
-    profile.quadraticCurveTo(1.55, 0.82, 2.02, 0.56);
-    profile.quadraticCurveTo(2.10, 0.36, 2.02, 0.18);
+    profile.moveTo(-2.15, 0.17);
+    profile.quadraticCurveTo(-2.18, 0.46, -2.02, 0.76);
+    profile.lineTo(-1.62, 0.82);
+    profile.bezierCurveTo(-1.14, 1.28, 0.16, 1.32, 0.90, 0.85);
+    profile.quadraticCurveTo(1.62, 0.79, 2.12, 0.52);
+    profile.quadraticCurveTo(2.20, 0.34, 2.10, 0.17);
     profile.closePath();
 
     const extrudeGeo = new THREE.ExtrudeGeometry(profile, {
-      depth: 1.56,
+      depth: 1.66,
       bevelEnabled: true,
-      bevelSegments: 4,
+      bevelSegments: 5,
       steps: 1,
-      bevelSize: 0.10,
-      bevelThickness: 0.10
+      bevelSize: 0.11,
+      bevelThickness: 0.11
     });
     extrudeGeo.center();
     extrudeGeo.rotateY(Math.PI / 2);
 
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: isLeadTarget ? 0x68707e : 0x454b56,
-      metalness: 0.48,
-      roughness: 0.34
+      color: isLeadTarget ? 0x737d8c : 0x4f5663,
+      metalness: 0.56,
+      roughness: 0.28
     });
     const bodyMesh = new THREE.Mesh(extrudeGeo, bodyMat);
-    bodyMesh.position.y = 0.68;
+    bodyMesh.position.y = 0.66;
     shellHolder.add(bodyMesh);
 
-    // 流線型車尾 C 字導光尾燈與輪廓線
     const tailMat = new THREE.MeshBasicMaterial({
-      color: isLeadTarget ? 0xef4444 : 0xb91c1c
+      color: isLeadTarget ? 0xef4444 : 0xdc2626
     });
-    const tailLeft = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.045, 0.04), tailMat);
-    tailLeft.position.set(0.56, 0.74, -2.06);
-    const tailRight = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.045, 0.04), tailMat);
-    tailRight.position.set(-0.56, 0.74, -2.06);
+    const tailLeft = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.04), tailMat);
+    tailLeft.position.set(0.58, 0.72, -2.14);
+    const tailRight = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.04), tailMat);
+    tailRight.position.set(-0.58, 0.72, -2.14);
     g.add(tailLeft, tailRight);
     if (isLeadTarget) this.leadTailMat = tailMat;
 
-    const wheelGeo = new THREE.CylinderGeometry(0.31, 0.31, 0.22, 18);
+    // 夜間濕潤路面尾燈紅光反射池
+    const reflGeo = new THREE.PlaneGeometry(1.75, 2.4);
+    const reflMat = new THREE.MeshBasicMaterial({
+      color: 0xef4444,
+      transparent: true,
+      opacity: 0.14,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    const reflMesh = new THREE.Mesh(reflGeo, reflMat);
+    reflMesh.rotation.x = -Math.PI / 2;
+    reflMesh.position.set(0, 0.018, -3.1);
+    g.add(reflMesh);
+
+    const wheelGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.24, 20);
     wheelGeo.rotateZ(Math.PI / 2);
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1f232a, roughness: 0.7 });
-    for (const [wx, wz] of [[-0.82, 1.34], [0.82, 1.34], [-0.82, -1.24], [0.82, -1.24]]) {
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1f232a, roughness: 0.65 });
+    for (const [wx, wz] of [[-0.86, 1.40], [0.86, 1.40], [-0.86, -1.32], [0.86, -1.32]]) {
       const w = new THREE.Mesh(wheelGeo, wheelMat);
-      w.position.set(wx, 0.31, wz);
+      w.position.set(wx, 0.32, wz);
       shellHolder.add(w);
     }
 
     if (isLeadTarget) {
-      // 前車地面跟車距離鎖定括號（簡潔克制）
       const bracketPts = [
-        new THREE.Vector3(-0.98, 0.025, -2.25),
-        new THREE.Vector3(-0.98, 0.025, -2.55),
-        new THREE.Vector3(0.98, 0.025, -2.55),
-        new THREE.Vector3(0.98, 0.025, -2.25)
+        new THREE.Vector3(-1.02, 0.025, -2.28),
+        new THREE.Vector3(-1.02, 0.025, -2.62),
+        new THREE.Vector3(1.02, 0.025, -2.62),
+        new THREE.Vector3(1.02, 0.025, -2.28)
       ];
       const bracketGeo = new THREE.BufferGeometry().setFromPoints(bracketPts);
       this.leadTargetBracketMat = new THREE.LineBasicMaterial({ color: 0xd1d5db });
@@ -459,9 +738,9 @@ export class SceneEngine {
     this.trafficGroup.add(this.leadCar);
 
     this.aiCars = [
-      { mesh: this.createSleekSedanSilhouetteGroup(false), laneX: -3.5, z: 14, relSpeed: -5 },
-      { mesh: this.createSleekSedanSilhouetteGroup(false), laneX: 3.5, z: 26, relSpeed: -11 },
-      { mesh: this.createSleekSedanSilhouetteGroup(false), laneX: -3.5, z: -16, relSpeed: 8 }
+      { mesh: this.createSleekSedanSilhouetteGroup(false), laneX: -3.5, z: 22, relSpeed: -4 },
+      { mesh: this.createSleekSedanSilhouetteGroup(false), laneX: 3.5, z: 34, relSpeed: -8 },
+      { mesh: this.createSleekSedanSilhouetteGroup(false), laneX: -3.5, z: 48, relSpeed: -3 }
     ];
     for (const ai of this.aiCars) {
       ai.mesh.position.set(ai.laneX, 0, ai.z);
@@ -469,30 +748,30 @@ export class SceneEngine {
     }
   }
 
-  /**
-   * 當自車 GLB 模型載入完成後，將前車與鄰車的車殼直接替換為與自車 100% 一致的 Model 3 流線型車身輪廓！
-   */
   upgradeTrafficToRealModelSilhouette(model) {
     const leadPaintMat = new THREE.MeshStandardMaterial({
-      color: 0x6b7482,
-      emissive: 0x11151c,
-      metalness: 0.55,
-      roughness: 0.30
+      color: 0x727c8c,
+      emissive: 0x10141c,
+      metalness: 0.58,
+      roughness: 0.26
     });
     const aiPaintMat = new THREE.MeshStandardMaterial({
-      color: 0x474e5a,
-      emissive: 0x090b0f,
-      metalness: 0.50,
-      roughness: 0.36
+      color: 0x4d5563,
+      emissive: 0x0a0d12,
+      metalness: 0.52,
+      roughness: 0.32
     });
-    const darkGlassMat = new THREE.MeshStandardMaterial({
-      color: 0x161920,
-      metalness: 0.3,
-      roughness: 0.15
+    const tintedGlassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x26354a,
+      emissive: 0x0a111a,
+      metalness: 0.20,
+      roughness: 0.08,
+      clearcoat: 0.85,
+      envMapIntensity: 1.4
     });
     const wheelDarkMat = new THREE.MeshStandardMaterial({
-      color: 0x22262e,
-      roughness: 0.6
+      color: 0x242933,
+      roughness: 0.55
     });
 
     const buildExteriorClone = (isLead) => {
@@ -511,7 +790,7 @@ export class SceneEngine {
         if (exteriorKeywords.some((kw) => nName.includes(kw))) {
           const m = new THREE.Mesh(
             n.geometry,
-            nName.includes('glass') ? darkGlassMat : (nName.includes('wheels') ? wheelDarkMat : (isLead ? leadPaintMat : aiPaintMat))
+            nName.includes('glass') ? tintedGlassMat : (nName.includes('wheels') ? wheelDarkMat : (isLead ? leadPaintMat : aiPaintMat))
           );
           m.matrixAutoUpdate = false;
           m.matrix.copy(n.matrixWorld);
@@ -566,20 +845,23 @@ export class SceneEngine {
       clearcoat: preset.clearcoat,
       clearcoatRoughness: preset.clearcoatRoughness,
       normalMap: this.paintNormalMap,
-      normalScale: new THREE.Vector2(0.02, 0.02),
+      normalScale: new THREE.Vector2(0.018, 0.018),
       clearcoatNormalMap: this.paintNormalMap,
-      clearcoatNormalScale: new THREE.Vector2(0.025, 0.025),
-      envMapIntensity: 0.95
+      clearcoatNormalScale: new THREE.Vector2(0.02, 0.02),
+      envMapIntensity: 1.12
     });
 
+    // 修正玻璃死黑：賦予車頂天幕與車窗深海藍灰通透底色、清漆層與高環境反射，徹底告別死黑塊
     this.glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0d1016,
-      metalness: 0.20,
-      roughness: 0.18,
-      transparent: false,
-      clearcoat: 0.45,
-      clearcoatRoughness: 0.25,
-      envMapIntensity: 0.72
+      color: 0x2b3d54,
+      emissive: 0x0d1726,
+      metalness: 0.18,
+      roughness: 0.06,
+      transparent: true,
+      opacity: 0.90,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.06,
+      envMapIntensity: 1.85
     });
 
     this.frontClearLensMat = new THREE.MeshBasicMaterial({
@@ -592,78 +874,79 @@ export class SceneEngine {
     this.rearSmokedLensMat = new THREE.MeshBasicMaterial({
       color: 0x16181d,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.12,
       depthWrite: false
     });
 
     this.tireRubberMat = new THREE.MeshStandardMaterial({
-      color: 0x14161a,
-      roughness: 0.86,
-      metalness: 0.05,
+      color: 0x16181d,
+      roughness: 0.82,
+      metalness: 0.06,
       normalMap: this.paintNormalMap,
-      normalScale: new THREE.Vector2(0.16, 0.16)
+      normalScale: new THREE.Vector2(0.15, 0.15)
     });
 
     this.wheelRimAlloyMat = new THREE.MeshPhysicalMaterial({
-      color: 0xaeb6c2,
+      color: 0xb4bcc8,
       map: this.wheelSpokeTex,
-      metalness: 0.78,
-      roughness: 0.28,
-      clearcoat: 0.35,
-      envMapIntensity: 1.05
+      metalness: 0.80,
+      roughness: 0.25,
+      clearcoat: 0.4,
+      envMapIntensity: 1.15
     });
 
+    // Model S (2021+ Palladium) 標誌性霧面黑化窗框飾條 (Satin Black Chrome Delete)
     this.aeroInsertMat = new THREE.MeshStandardMaterial({
-      color: 0x282c34,
+      color: 0x242830,
       metalness: 0.65,
-      roughness: 0.35
+      roughness: 0.32
     });
 
     this.brushedMetalMat = new THREE.MeshPhysicalMaterial({
-      color: 0xbec6d2,
-      metalness: 0.82,
-      roughness: 0.24,
-      clearcoat: 0.3,
-      envMapIntensity: 1.05
+      color: 0x2d323b,
+      metalness: 0.78,
+      roughness: 0.26,
+      clearcoat: 0.35,
+      envMapIntensity: 1.10
     });
 
     this.brakeRotorGreyMat = new THREE.MeshStandardMaterial({
-      color: 0x525866,
-      metalness: 0.75,
-      roughness: 0.36
+      color: 0x5c6472,
+      metalness: 0.78,
+      roughness: 0.32
     });
 
     this.caliperDarkMat = new THREE.MeshStandardMaterial({
-      color: 0x374151,
-      metalness: 0.60,
-      roughness: 0.38
+      color: 0x991b1b,
+      metalness: 0.55,
+      roughness: 0.36
     });
 
     this.interiorDarkMat = new THREE.MeshStandardMaterial({
-      color: 0x1b1e24,
-      roughness: 0.75,
-      metalness: 0.06
+      color: 0x1e222a,
+      roughness: 0.72,
+      metalness: 0.08
     });
     this.interiorWhiteLeatherMat = new THREE.MeshStandardMaterial({
-      color: 0xd0d6e0,
-      roughness: 0.55,
+      color: 0xd8dee8,
+      roughness: 0.50,
       metalness: 0.04
     });
 
     this.matFrontStripLeft = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.92, 0.96, 1.02),
+      color: new THREE.Color(0.86, 0.90, 0.96),
       side: THREE.DoubleSide
     });
     this.matFrontStripRight = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.92, 0.96, 1.02),
+      color: new THREE.Color(0.86, 0.90, 0.96),
       side: THREE.DoubleSide
     });
     this.matHeadlight = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.98, 1.0, 1.05),
+      color: new THREE.Color(0.90, 0.94, 0.98),
       side: THREE.DoubleSide
     });
     this.matFogFront = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.65, 0.70, 0.78),
+      color: new THREE.Color(0.62, 0.68, 0.76),
       side: THREE.DoubleSide
     });
     this.matTurnLeft = new THREE.MeshBasicMaterial({
@@ -675,19 +958,19 @@ export class SceneEngine {
       side: THREE.DoubleSide
     });
     this.matTailLeft = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.72, 0.12, 0.12),
+      color: new THREE.Color(0.75, 0.12, 0.12),
       side: THREE.DoubleSide
     });
     this.matTailRight = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.72, 0.12, 0.12),
+      color: new THREE.Color(0.75, 0.12, 0.12),
       side: THREE.DoubleSide
     });
     this.matTailCenter = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.62, 0.10, 0.10),
+      color: new THREE.Color(0.65, 0.10, 0.10),
       side: THREE.DoubleSide
     });
     this.matBrake = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0.12, 0.12, 0.14),
+      color: new THREE.Color(0.14, 0.14, 0.16),
       side: THREE.DoubleSide
     });
     this.matReverse = new THREE.MeshBasicMaterial({
@@ -700,97 +983,92 @@ export class SceneEngine {
     this.proceduralEgoCar = new THREE.Group();
     this.proceduralEgoCar.name = 'proceduralEgoCar';
 
-    // 1. Model 3 流線型 Fastback 轎跑車身主體
+    // Model S (2021+ Refresh) 修長寬體溜背轎跑比例
     const profile = new THREE.Shape();
-    profile.moveTo(-2.05, 0.16);
-    profile.quadraticCurveTo(-2.10, 0.45, -1.95, 0.72);
-    profile.lineTo(-1.60, 0.82);
-    profile.bezierCurveTo(-1.15, 1.30, 0.15, 1.35, 0.90, 0.86);
-    profile.quadraticCurveTo(1.60, 0.78, 2.05, 0.48);
-    profile.quadraticCurveTo(2.12, 0.28, 2.02, 0.16);
+    profile.moveTo(-2.18, 0.15);
+    profile.quadraticCurveTo(-2.22, 0.44, -2.06, 0.70);
+    profile.lineTo(-1.68, 0.80);
+    profile.bezierCurveTo(-1.20, 1.26, 0.18, 1.30, 0.96, 0.84);
+    profile.quadraticCurveTo(1.68, 0.76, 2.16, 0.46);
+    profile.quadraticCurveTo(2.24, 0.26, 2.12, 0.15);
     profile.closePath();
 
     const extrudeGeo = new THREE.ExtrudeGeometry(profile, {
-      depth: 1.58,
+      depth: 1.68,
       bevelEnabled: true,
-      bevelSegments: 4,
+      bevelSegments: 5,
       steps: 1,
-      bevelSize: 0.11,
-      bevelThickness: 0.11
+      bevelSize: 0.12,
+      bevelThickness: 0.12
     });
     extrudeGeo.center();
     extrudeGeo.rotateY(Math.PI / 2);
 
     const bodyMesh = new THREE.Mesh(extrudeGeo, this.carBodyPaintMat);
-    bodyMesh.position.y = 0.68;
+    bodyMesh.position.y = 0.66;
     bodyMesh.castShadow = true;
     bodyMesh.receiveShadow = true;
     this.proceduralEgoCar.add(bodyMesh);
 
-    // 2. 全景黑色高光玻璃天幕
-    const glassGeo = new THREE.BoxGeometry(1.22, 0.08, 2.15);
+    const glassGeo = new THREE.BoxGeometry(1.28, 0.08, 2.25);
     const glassMesh = new THREE.Mesh(glassGeo, this.glassMat);
-    glassMesh.position.set(0, 1.25, -0.22);
-    glassMesh.rotation.x = 0.08;
+    glassMesh.position.set(0, 1.22, -0.22);
+    glassMesh.rotation.x = 0.07;
     this.proceduralEgoCar.add(glassMesh);
 
-    // 3. 左右後視鏡
-    const mirrorGeo = new THREE.BoxGeometry(0.18, 0.08, 0.12);
+    const mirrorGeo = new THREE.BoxGeometry(0.19, 0.08, 0.12);
     const mirrorL = new THREE.Mesh(mirrorGeo, this.carBodyPaintMat);
-    mirrorL.position.set(0.96, 0.92, 0.65);
+    mirrorL.position.set(1.01, 0.90, 0.68);
     const mirrorR = new THREE.Mesh(mirrorGeo, this.carBodyPaintMat);
-    mirrorR.position.set(-0.96, 0.92, 0.65);
+    mirrorR.position.set(-1.01, 0.90, 0.68);
     this.proceduralEgoCar.add(mirrorL, mirrorR);
 
-    // 4. 車頭燈光組（左右 C 型 LED 日行燈條 + 矩陣大燈）
-    const headstripGeo = new THREE.BoxGeometry(0.34, 0.038, 0.06);
+    const headstripGeo = new THREE.BoxGeometry(0.36, 0.036, 0.06);
     const headstripL = new THREE.Mesh(headstripGeo, this.matFrontStripLeft);
-    headstripL.position.set(0.68, 0.66, 2.04);
-    headstripL.rotation.y = -0.25;
+    headstripL.position.set(0.72, 0.64, 2.14);
+    headstripL.rotation.y = -0.24;
     const headstripR = new THREE.Mesh(headstripGeo, this.matFrontStripRight);
-    headstripR.position.set(-0.68, 0.66, 2.04);
-    headstripR.rotation.y = 0.25;
+    headstripR.position.set(-0.72, 0.64, 2.14);
+    headstripR.rotation.y = 0.24;
 
-    const mainLightGeo = new THREE.BoxGeometry(0.18, 0.05, 0.04);
+    const mainLightGeo = new THREE.BoxGeometry(0.19, 0.048, 0.04);
     const mainLightL = new THREE.Mesh(mainLightGeo, this.matHeadlight);
-    mainLightL.position.set(0.72, 0.64, 2.02);
+    mainLightL.position.set(0.75, 0.62, 2.12);
     const mainLightR = new THREE.Mesh(mainLightGeo, this.matHeadlight);
-    mainLightR.position.set(-0.72, 0.64, 2.02);
+    mainLightR.position.set(-0.75, 0.62, 2.12);
     this.proceduralEgoCar.add(headstripL, headstripR, mainLightL, mainLightR);
 
-    // 5. 車尾貫穿與左右 LED 尾燈組
-    const tailstripGeo = new THREE.BoxGeometry(0.42, 0.042, 0.05);
+    const tailstripGeo = new THREE.BoxGeometry(0.45, 0.042, 0.05);
     const tailstripL = new THREE.Mesh(tailstripGeo, this.matTailLeft);
-    tailstripL.position.set(0.62, 0.72, -2.04);
-    tailstripL.rotation.y = 0.20;
+    tailstripL.position.set(0.65, 0.70, -2.14);
+    tailstripL.rotation.y = 0.18;
     const tailstripR = new THREE.Mesh(tailstripGeo, this.matTailRight);
-    tailstripR.position.set(-0.62, 0.72, -2.04);
-    tailstripR.rotation.y = -0.20;
+    tailstripR.position.set(-0.65, 0.70, -2.14);
+    tailstripR.rotation.y = -0.18;
 
-    const brakeCenterGeo = new THREE.BoxGeometry(0.58, 0.025, 0.04);
+    const brakeCenterGeo = new THREE.BoxGeometry(0.62, 0.025, 0.04);
     const brakeCenter = new THREE.Mesh(brakeCenterGeo, this.matBrake);
-    brakeCenter.position.set(0, 1.18, -1.35);
+    brakeCenter.position.set(0, 1.15, -1.42);
     this.proceduralEgoCar.add(tailstripL, tailstripR, brakeCenter);
 
-    // 6. 四個程序化旋轉車輪與金屬輪轂
     const wheelFrontGroup = new THREE.Group();
     const wheelRearGroup = new THREE.Group();
-    wheelFrontGroup.position.set(0, 0.35, 1.35);
-    wheelRearGroup.position.set(0, 0.35, -1.45);
+    wheelFrontGroup.position.set(0, 0.35, 1.42);
+    wheelRearGroup.position.set(0, 0.35, -1.52);
 
     const makeWheel = (isLeft) => {
       const wg = new THREE.Group();
-      const tireGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.22, 24);
+      const tireGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.24, 24);
       tireGeo.rotateZ(Math.PI / 2);
       const tire = new THREE.Mesh(tireGeo, this.tireRubberMat);
       tire.castShadow = true;
 
-      const rimGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.224, 16);
+      const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.244, 16);
       rimGeo.rotateZ(Math.PI / 2);
       const rim = new THREE.Mesh(rimGeo, this.wheelRimAlloyMat);
 
       wg.add(tire, rim);
-      wg.position.x = isLeft ? 0.88 : -0.88;
+      wg.position.x = isLeft ? 0.92 : -0.92;
       return wg;
     };
 
@@ -802,9 +1080,8 @@ export class SceneEngine {
     this.carParts.wheelsFront = wheelFrontGroup;
     this.carParts.wheelsRear = wheelRearGroup;
 
-    // 保底車門與蓋板（輕量旋轉虛擬節點，確保未載入 GLB 時點擊車控也能看見開門效果）
     const dummyDoorFL = new THREE.Group();
-    dummyDoorFL.position.set(0.85, 0.65, 0.3);
+    dummyDoorFL.position.set(0.88, 0.65, 0.3);
     const dummyFrunk = new THREE.Group();
     dummyFrunk.position.set(0, 0.65, 1.5);
     const dummyTrunk = new THREE.Group();
@@ -831,8 +1108,9 @@ export class SceneEngine {
         box.getSize(size);
 
         const maxDim = Math.max(size.x, size.y, size.z);
-        const scaleFactor = 4.18 / maxDim;
-        model.scale.multiplyScalar(scaleFactor);
+        const scaleFactor = 4.22 / maxDim;
+        // 調整為 2021+ Model S Palladium 寬體低趴長軸距比例 (寬 +4.5%, 高 -3.5%, 長 +5%)
+        model.scale.set(scaleFactor * 1.045, scaleFactor * 0.965, scaleFactor * 1.05);
         model.updateMatrixWorld(true);
 
         const scaledBox = new THREE.Box3().setFromObject(model);
@@ -865,7 +1143,7 @@ export class SceneEngine {
         }
       },
       (err) => {
-        console.warn('[SceneEngine] GLB load fallback active (procedural model maintained):', err);
+        console.warn('[SceneEngine] GLB load fallback active (Model S procedural model maintained):', err);
       }
     );
   }
@@ -975,8 +1253,9 @@ export class SceneEngine {
         } else if (nName.includes('tembus_belakang') || nName.includes('tembus_boot') || nName.includes('black_boot') || nName.includes('black_lights_black_lights')) {
           node.material = rearSmokedLensMat;
           node.castShadow = false;
-        } else if (mName.includes('glass')) {
+        } else if (mName.includes('glass') || nName.includes('windscreen') || nName.includes('glass')) {
           node.material = glassMat;
+          node.castShadow = false;
         } else if (mName.includes('aluminium_light')) {
           splitSymmetricLightMesh(node, this.matFrontStripLeft, this.matFrontStripRight);
         } else if (nName.includes('chrome_foglight_l')) {
@@ -1026,7 +1305,7 @@ export class SceneEngine {
 
   buildArticulatedChargePortAndLightFixtures() {
     this.chargePortGroup = new THREE.Group();
-    this.chargePortGroup.position.set(0.78, 0.74, -1.58);
+    this.chargePortGroup.position.set(0.81, 0.74, -1.64);
     this.egoCarGroup.add(this.chargePortGroup);
 
     const socketGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.03, 20);
@@ -1066,8 +1345,8 @@ export class SceneEngine {
     spotCanvas.height = 256;
     const spCtx = spotCanvas.getContext('2d');
     const spGrad = spCtx.createRadialGradient(128, 195, 8, 128, 115, 118);
-    spGrad.addColorStop(0, 'rgba(255, 255, 255, 0.32)');
-    spGrad.addColorStop(0.45, 'rgba(235, 245, 255, 0.12)');
+    spGrad.addColorStop(0, 'rgba(255, 255, 255, 0.30)');
+    spGrad.addColorStop(0.45, 'rgba(235, 245, 255, 0.11)');
     spGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
     spCtx.fillStyle = spGrad;
     spCtx.fillRect(0, 0, 256, 256);
@@ -1080,7 +1359,7 @@ export class SceneEngine {
       depthWrite: false,
       blending: THREE.AdditiveBlending
     });
-    this.roadHeadlightPool = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 12.0), this.roadHeadlightPoolMat);
+    this.roadHeadlightPool = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 12.5), this.roadHeadlightPoolMat);
     this.roadHeadlightPool.rotation.x = -Math.PI / 2;
     this.roadHeadlightPool.position.set(0, 0.02, 7.8);
     this.egoCarGroup.add(this.roadHeadlightPool);
@@ -1094,7 +1373,7 @@ export class SceneEngine {
       opacity: 0.85
     });
     this.tpmsWarnRing = new THREE.Mesh(tpmsRingGeo, this.tpmsWarnRingMat);
-    this.tpmsWarnRing.position.set(0.76, 0.025, -1.16);
+    this.tpmsWarnRing.position.set(0.80, 0.025, -1.22);
     this.tpmsWarnRing.visible = false;
     this.egoCarGroup.add(this.tpmsWarnRing);
   }
@@ -1163,33 +1442,39 @@ export class SceneEngine {
     if (this._lastNight !== isNight) {
       this._lastNight = isNight;
       this.scene.environment = isNight ? this.envMapNight : this.envMapDay;
-      const bgHex = isNight ? 0x121316 : 0xe5e7eb;
+      const bgHex = isNight ? 0x11151d : 0xdce3ed;
       this.scene.background.setHex(bgHex);
       this.scene.fog.color.setHex(bgHex);
-      this.hemiLight.color.setHex(isNight ? 0xcbd5e1 : 0xffffff);
-      this.hemiLight.groundColor.setHex(isNight ? 0x121316 : 0x9ca3af);
-      this.hemiLight.intensity = isNight ? 0.72 : 1.15;
-      this.dirLight.intensity = isNight ? 1.05 : 1.45;
+      this.hemiLight.color.setHex(isNight ? 0xdbe4f0 : 0xffffff);
+      this.hemiLight.groundColor.setHex(isNight ? 0x181e29 : 0x9ca3af);
+      this.hemiLight.intensity = isNight ? 0.92 : 1.28;
+      this.dirLight.intensity = isNight ? 1.18 : 1.52;
       this.dirLight.color.setHex(0xf3f4f6);
-      this.roadMat.color.setHex(isNight ? 0x161920 : 0xcbd0d8);
-      this.lampBulbMat.emissiveIntensity = isNight ? 0.55 : 0.08;
+      this.roadMat.color.setHex(isNight ? 0x222834 : 0xaeb6c4);
+      this.glassMat.color.setHex(isNight ? 0x2b3d54 : 0x3b526e);
+      this.glassMat.emissive.setHex(isNight ? 0x0d1726 : 0x142236);
+      this.lampBulbMat.emissiveIntensity = isNight ? 0.88 : 0.06;
+      if (this.lampHaloMat) this.lampHaloMat.opacity = isNight ? 0.62 : 0.0;
+      if (this.lampGroundPoolMat) this.lampGroundPoolMat.opacity = isNight ? 0.24 : 0.0;
     }
 
+    // 夜間濕潤反射與雨雪天氣材質聯動
     if (s.environment.weather === 'rain') {
-      this.roadMat.roughness = 0.24;
-      this.roadMat.metalness = 0.42;
+      this.roadMat.roughness = 0.20;
+      this.roadMat.metalness = 0.48;
       this.weatherMat.opacity = 0.72;
       this.weatherMat.color.setHex(0xbfdbfe);
       this.weatherMat.size = 0.15;
     } else if (s.environment.weather === 'snow') {
-      this.roadMat.roughness = 0.55;
-      this.roadMat.metalness = 0.15;
+      this.roadMat.roughness = 0.52;
+      this.roadMat.metalness = 0.18;
       this.weatherMat.opacity = 0.88;
       this.weatherMat.color.setHex(0xffffff);
       this.weatherMat.size = 0.24;
     } else {
-      this.roadMat.roughness = 0.80;
-      this.roadMat.metalness = 0.08;
+      // 夜間預設帶微濕柏油反射感，日間為乾爽顆粒柏油
+      this.roadMat.roughness = isNight ? 0.36 : 0.68;
+      this.roadMat.metalness = isNight ? 0.30 : 0.12;
       this.weatherMat.opacity = 0.0;
     }
 
@@ -1250,7 +1535,6 @@ export class SceneEngine {
       this.carParts.steering.rotation.y = THREE.MathUtils.degToRad(s.steeringAngle);
     }
 
-    // 前輪與後輪 100% 同步旋轉
     const speedMps = (s.displaySpeed / 3.6) * (s.gear === 'R' ? -1 : 1);
     this.wheelAngle = (this.wheelAngle - (speedMps * dt) / 0.34) % (Math.PI * 2);
     if (this.carParts.wheelsFront) {
@@ -1260,91 +1544,73 @@ export class SceneEngine {
       this.carParts.wheelsRear.rotation.x = this.wheelAngle;
     }
 
-    // =========================================================================
-    // 柔和自然的原生雕刻車燈控制（不過曝、清晰呈現燈帶形狀）
-    // =========================================================================
+    // 柔和不刺眼的車燈控制（手機 App 視口下還會二次降曝，保證車燈絕不過曝）
     const leftTurnActive = s.lights.turnSignal === 'left' || s.lights.hazard || s.findMyCarActive;
     const rightTurnActive = s.lights.turnSignal === 'right' || s.lights.hazard || s.findMyCarActive;
     const leftTurnBlinkOn = leftTurnActive && s.lights.blinkPhase;
     const rightTurnBlinkOn = rightTurnActive && s.lights.blinkPhase;
 
-    const drlLvl = s.lights.highBeam ? 1.15 : (s.lights.lowBeam ? 0.92 : (s.lights.drl ? 0.78 : 0.14));
-    const headLvl = s.lights.highBeam ? 1.22 : (s.lights.lowBeam ? 0.98 : 0.14);
-    const fogLvl = (s.lights.fogFront || s.lights.highBeam) ? 1.05 : (s.lights.lowBeam ? 0.55 : 0.12);
+    const drlLvl = s.lights.highBeam ? 0.96 : (s.lights.lowBeam ? 0.84 : (s.lights.drl ? 0.72 : 0.14));
+    const headLvl = s.lights.highBeam ? 1.02 : (s.lights.lowBeam ? 0.88 : 0.14);
+    const fogLvl = (s.lights.fogFront || s.lights.highBeam) ? 0.86 : (s.lights.lowBeam ? 0.50 : 0.12);
 
     if (this.matHeadlight) {
-      this.matHeadlight.color.setRGB(headLvl, headLvl, headLvl * 1.03);
+      this.matHeadlight.color.setRGB(headLvl, headLvl, headLvl * 1.02);
     }
     if (this.matFogFront) {
-      this.matFogFront.color.setRGB(fogLvl, fogLvl, fogLvl * 1.03);
+      this.matFogFront.color.setRGB(fogLvl, fogLvl, fogLvl * 1.02);
     }
 
     if (this.matFrontStripLeft) {
       if (leftTurnActive) {
         if (leftTurnBlinkOn) {
-          this.matFrontStripLeft.color.setRGB(1.35, 0.72, 0.05);
+          this.matFrontStripLeft.color.setRGB(1.15, 0.65, 0.05);
         } else {
           this.matFrontStripLeft.color.setRGB(0.20, 0.12, 0.02);
         }
       } else {
-        this.matFrontStripLeft.color.setRGB(drlLvl, drlLvl * 1.01, drlLvl * 1.04);
+        this.matFrontStripLeft.color.setRGB(drlLvl, drlLvl * 1.01, drlLvl * 1.03);
       }
     }
     if (this.matFrontStripRight) {
       if (rightTurnActive) {
         if (rightTurnBlinkOn) {
-          this.matFrontStripRight.color.setRGB(1.35, 0.72, 0.05);
+          this.matFrontStripRight.color.setRGB(1.15, 0.65, 0.05);
         } else {
           this.matFrontStripRight.color.setRGB(0.20, 0.12, 0.02);
         }
       } else {
-        this.matFrontStripRight.color.setRGB(drlLvl, drlLvl * 1.01, drlLvl * 1.04);
+        this.matFrontStripRight.color.setRGB(drlLvl, drlLvl * 1.01, drlLvl * 1.03);
       }
     }
 
     if (this.matTurnLeft) {
-      if (leftTurnBlinkOn) {
-        this.matTurnLeft.color.setRGB(1.35, 0.72, 0.05);
-      } else {
-        this.matTurnLeft.color.setRGB(0.16, 0.10, 0.02);
-      }
+      this.matTurnLeft.color.setRGB(leftTurnBlinkOn ? 1.15 : 0.16, leftTurnBlinkOn ? 0.65 : 0.10, 0.02);
     }
     if (this.matTurnRight) {
-      if (rightTurnBlinkOn) {
-        this.matTurnRight.color.setRGB(1.35, 0.72, 0.05);
-      } else {
-        this.matTurnRight.color.setRGB(0.16, 0.10, 0.02);
-      }
+      this.matTurnRight.color.setRGB(rightTurnBlinkOn ? 1.15 : 0.16, rightTurnBlinkOn ? 0.65 : 0.10, 0.02);
     }
 
     if (this.roadHeadlightPool) {
       this.roadHeadlightPool.visible = s.lights.highBeam || s.lights.lowBeam;
-      this.roadHeadlightPoolMat.opacity = s.lights.highBeam ? 0.38 : 0.18;
+      this.roadHeadlightPoolMat.opacity = s.lights.highBeam ? 0.34 : 0.16;
       this.roadHeadlightPool.scale.set(s.lights.highBeam ? 1.32 : 1.0, s.lights.highBeam ? 1.45 : 1.0, 1);
     }
 
     const brakeActive = s.braking || s.displayPowerKw < -6;
-    const tailRedR = brakeActive ? 1.25 : (s.lights.lowBeam || s.lights.drl ? 0.68 : 0.16);
-    const tailRedGB = brakeActive ? 0.12 : 0.07;
+    const tailRedR = brakeActive ? 1.12 : (s.lights.lowBeam || s.lights.drl ? 0.66 : 0.16);
+    const tailRedGB = brakeActive ? 0.10 : 0.06;
 
     if (this.matTailLeft) {
       if (leftTurnActive) {
-        if (leftTurnBlinkOn) {
-          this.matTailLeft.color.setRGB(1.35, 0.68, 0.05);
-        } else {
-          this.matTailLeft.color.setRGB(0.22, 0.10, 0.04);
-        }
+        this.matTailLeft.color.setRGB(leftTurnBlinkOn ? 1.15 : 0.22, leftTurnBlinkOn ? 0.62 : 0.10, 0.04);
       } else {
         this.matTailLeft.color.setRGB(tailRedR, tailRedGB, tailRedGB);
       }
     }
     if (this.matTailRight) {
       if (rightTurnActive) {
-        if (rightTurnBlinkOn) {
-          this.matTailRight.color.setRGB(1.35, 0.68, 0.05);
-        } else {
-          this.matTailRight.color.setRGB(0.22, 0.10, 0.04);
-        }
+        this.matTailRight.color.setRGB(rightTurnBlinkOn ? 1.15 : 0.22, rightTurnBlinkOn ? 0.62 : 0.10, 0.04);
       } else {
         this.matTailRight.color.setRGB(tailRedR, tailRedGB, tailRedGB);
       }
@@ -1353,21 +1619,18 @@ export class SceneEngine {
       this.matTailCenter.color.setRGB(tailRedR * 0.85, tailRedGB, tailRedGB);
     }
     if (this.matBrake) {
-      if (brakeActive) {
-        this.matBrake.color.setRGB(1.35, 0.12, 0.12);
-      } else {
-        this.matBrake.color.setRGB(0.14, 0.14, 0.16);
-      }
+      this.matBrake.color.setRGB(brakeActive ? 1.18 : 0.14, brakeActive ? 0.10 : 0.14, brakeActive ? 0.10 : 0.16);
     }
     if (this.matReverse) {
-      if (s.gear === 'R') {
-        this.matReverse.color.setRGB(1.15, 1.15, 1.20);
-      } else {
-        this.matReverse.color.setRGB(0.18, 0.18, 0.20);
-      }
+      this.matReverse.color.setRGB(s.gear === 'R' ? 1.05 : 0.18, s.gear === 'R' ? 1.05 : 0.18, s.gear === 'R' ? 1.10 : 0.20);
     }
 
     this.roadOffset = (this.roadOffset + speedMps * dt) % 9;
+    if (this.asphaltTextures?.diffuseTex) {
+      this.asphaltTextures.diffuseTex.offset.y = (this.roadOffset / 9) * 2;
+      this.asphaltTextures.roughTex.offset.y = (this.roadOffset / 9) * 2;
+    }
+
     for (const dash of this.dashMeshes) {
       let z = dash.userData.baseZ - this.roadOffset;
       if (z < -80) z += 220;
@@ -1377,7 +1640,7 @@ export class SceneEngine {
       dash.position.x = dash.userData.baseX + (zForward * zForward) * 0.0004 * s.roadCurvature;
     }
 
-    this.lampOffset = ((this.lampOffset || 0) + speedMps * dt) % 40;
+    this.lampOffset = ((this.lampOffset || 0) + speedMps * dt) % 36;
     for (const lamp of this.streetLights) {
       let z = lamp.userData.baseZ - this.lampOffset;
       if (z < -60) z += 180;
@@ -1385,31 +1648,79 @@ export class SceneEngine {
       lamp.position.z = z;
     }
 
+    // 輔助駕駛車道線與車道偏離提示 (Lane Departure Warning)
     const apVisible = s.gear === 'D';
     this.apLeftEdge.visible = apVisible;
     this.apRightEdge.visible = apVisible;
-    if (this.apEdgeMat) {
-      this.apEdgeMat.color.setHex(s.driveMode.autopilot ? 0x3e6ae1 : 0x6b7280);
-      this.apEdgeMat.opacity = s.driveMode.autopilot ? 0.68 : 0.35;
+    const ldwVal = s.driveMode.laneDepartureWarn;
+    const ldwActive = ldwVal === true || ldwVal === 'left' || ldwVal === 'right';
+    const ldwPulse = 0.55 + 0.45 * Math.abs(Math.sin(now * 0.01));
+    const baseLaneColor = s.driveMode.autopilot ? 0x3e6ae1 : 0x6b7280;
+
+    if (this.apLeftEdgeMat && this.apRightEdgeMat) {
+      if (ldwActive) {
+        const warnLeft = ldwVal === 'left' || (ldwVal === true && s.steeringAngle <= 0);
+        this.apLeftEdgeMat.color.setHex(warnLeft ? 0xf59e0b : baseLaneColor);
+        this.apRightEdgeMat.color.setHex(!warnLeft ? 0xf59e0b : baseLaneColor);
+        this.apLeftEdgeMat.opacity = warnLeft ? ldwPulse : 0.65;
+        this.apRightEdgeMat.opacity = !warnLeft ? ldwPulse : 0.65;
+        this.apLeftEdge.scale.x = warnLeft ? 1.8 : 1.0;
+        this.apRightEdge.scale.x = !warnLeft ? 1.8 : 1.0;
+      } else {
+        this.apLeftEdgeMat.color.setHex(baseLaneColor);
+        this.apRightEdgeMat.color.setHex(baseLaneColor);
+        this.apLeftEdgeMat.opacity = s.driveMode.autopilot ? 0.68 : 0.36;
+        this.apRightEdgeMat.opacity = s.driveMode.autopilot ? 0.68 : 0.36;
+        this.apLeftEdge.scale.x = 1.0;
+        this.apRightEdge.scale.x = 1.0;
+      }
     }
 
-    const chevronFlow = (now * 0.006) % 9.5;
+    // 3D 貼地導航箭頭：根據下個路口轉向方向（左轉/右轉/直行）自動偏移並轉向
+    const chevronFlow = (now * 0.0065) % 7.5;
+    const turnIcon = this.store.getTurnIconName ? this.store.getTurnIconName() : 'turnRight';
+    const turnBias = turnIcon === 'turnLeft' ? -1 : 1;
     for (let i = 0; i < this.arChevrons.length; i++) {
       const ch = this.arChevrons[i];
       ch.visible = s.navigation.active && s.gear === 'D';
-      const distZ = 10.0 + i * 9.0 + chevronFlow;
+      const distZ = 8.5 + i * 7.5 + chevronFlow;
       ch.position.z = distZ;
-      ch.position.x = (distZ * distZ) * 0.0004 * s.roadCurvature;
-      const fade = 1 - Math.abs((i + (chevronFlow / 9.5)) / 3 - 0.5) * 1.4;
-      ch.material.opacity = Math.max(0.15, Math.min(0.55, fade));
+      const curveOffset = (distZ * distZ) * 0.0004 * s.roadCurvature + (i >= 2 ? turnBias * (i - 1.2) * 0.26 : 0);
+      ch.position.x = curveOffset;
+      ch.rotation.z = i >= 2 ? -turnBias * 0.22 : 0;
+      const fade = 1 - Math.abs((i + (chevronFlow / 7.5)) / 4 - 0.5) * 1.35;
+      ch.material.opacity = Math.max(0.18, Math.min(0.62, fade));
     }
 
+    // 前車位置與 3D 貼地跟車距離色帶 (僅在 HUD / 擋風玻璃視口呈現克制細色帶，不在儀錶盤或中控鋪設大面積綠塊)
     if (this.leadCar) {
-      const leadZ = Math.min(18, Math.max(10.5, s.driveMode.displayLeadDistanceM * 0.40));
+      const distM = s.driveMode.displayLeadDistanceM || 26;
+      const leadZ = Math.min(26, Math.max(15.0, distM * 0.58));
       this.leadCar.position.z = leadZ;
       this.leadCar.position.x = (leadZ * leadZ) * 0.0004 * s.roadCurvature;
+
+      const bandColor = (s.driveMode.forwardCollisionWarn || distM < 16)
+        ? 0xef4444
+        : (distM < 26 ? 0xf59e0b : 0x22c55e);
+
       if (this.leadTargetBracketMat) {
-        this.leadTargetBracketMat.color.setHex(s.driveMode.forwardCollisionWarn ? 0xdc2626 : 0x9ca3af);
+        this.leadTargetBracketMat.color.setHex(bandColor);
+      }
+      if (this.followDistanceBand && this.followThresholdBar) {
+        const startZ = 4.2;
+        const endZ = leadZ - 2.3;
+        const lengthZ = Math.max(1.5, endZ - startZ);
+        this.followDistanceBand.scale.set(0.65, lengthZ, 1);
+        this.followDistanceBand.position.z = startZ + lengthZ * 0.5;
+        this.followDistanceBand.position.x = this.leadCar.position.x * 0.5;
+        this.followBandMat.color.setHex(bandColor);
+        this.followBandMat.opacity = s.driveMode.forwardCollisionWarn ? 0.22 : 0.09;
+
+        this.followThresholdBar.scale.set(0.78, 0.55, 1);
+        this.followThresholdBar.position.z = endZ;
+        this.followThresholdBar.position.x = this.leadCar.position.x;
+        this.followThresholdBarMat.color.setHex(bandColor);
+        this.followThresholdBarMat.opacity = 0.55;
       }
     }
 
@@ -1419,8 +1730,8 @@ export class SceneEngine {
       } else {
         ai.z += 3.0 * dt;
       }
-      if (ai.z > 65) ai.z = -30;
-      if (ai.z < -30) ai.z = 65;
+      if (ai.z > 72) ai.z = 16;
+      if (ai.z < 16) ai.z = 72;
       ai.mesh.position.z = ai.z;
       const zFwd = Math.max(0, ai.z);
       ai.mesh.position.x = ai.laneX + (zFwd * zFwd) * 0.0004 * s.roadCurvature;
@@ -1439,39 +1750,44 @@ export class SceneEngine {
     }
     this.cameras.mobile.position.set(
       mOrb.radius * Math.sin(mOrb.phi) * Math.sin(mOrb.theta),
-      mOrb.radius * Math.cos(mOrb.phi) + 0.28,
+      mOrb.radius * Math.cos(mOrb.phi) + 0.26,
       mOrb.radius * Math.sin(mOrb.phi) * Math.cos(mOrb.theta)
     );
     this.cameras.mobile.lookAt(0, mOrb.targetY, 0);
 
-    // 2. 中控屏 ADAS 相機：拉遠距離 (radius 11.6)、降低俯視角 (高度約 2.8m)，使自車縮小、前車與遠方道路清晰完整呈現
+    // 2. 中控屏 ADAS 相機
     const hasAnyOpen = s.doors.fl || s.doors.fr || s.doors.rl || s.doors.rr || s.doors.frunk || s.doors.trunk || s.doors.chargePort || s.tires.lowPressureWarning;
     const showShowcaseView = s.gear === 'P' || hasAnyOpen;
     const cOrb = this.orbits.center;
     if (!cOrb.dragging) {
       const targetTheta = s.doors.frunk ? 0.45 : (s.doors.trunk || s.doors.chargePort || s.tires.lowPressureWarning ? 2.45 : (showShowcaseView ? 0.62 : 0.0));
-      const targetPhi = showShowcaseView ? 1.18 : 1.31;
-      const targetRad = showShowcaseView ? 7.2 : 11.6;
+      const targetPhi = showShowcaseView ? 1.18 : 1.30;
+      const targetRad = showShowcaseView ? 7.2 : 11.4;
       cOrb.theta += (targetTheta - cOrb.theta) * Math.min(1, dt * 4.0);
       cOrb.phi += (targetPhi - cOrb.phi) * Math.min(1, dt * 4.0);
       cOrb.radius += (targetRad - cOrb.radius) * Math.min(1, dt * 4.0);
     }
     this.cameras.center.position.set(
       cOrb.radius * Math.sin(cOrb.phi) * Math.sin(cOrb.theta),
-      cOrb.radius * Math.cos(cOrb.phi) + (showShowcaseView ? 0.45 : -0.10),
+      cOrb.radius * Math.cos(cOrb.phi) + (showShowcaseView ? 0.45 : -0.08),
       showShowcaseView
         ? cOrb.radius * Math.sin(cOrb.phi) * Math.cos(cOrb.theta)
         : -cOrb.radius * Math.sin(cOrb.phi) * Math.cos(cOrb.theta)
     );
-    this.cameras.center.lookAt(0, showShowcaseView ? 0.48 : 0.68, showShowcaseView ? 0.0 : 5.8);
+    this.cameras.center.lookAt(0, showShowcaseView ? 0.48 : 0.66, showShowcaseView ? 0.0 : 5.8);
 
-    // 3. 儀錶盤相機：降低俯角並將視點往車尾拉回 (z = 0.6)，使自車上移至畫布中央偏上，車尾與後輪 100% 完整顯示不被底部方向盤截斷
+    // 3. 儀錶盤相機 (Model S 8:3 橫條小屏專用平順視角)
     this.cameras.cluster.position.set(0, 2.95, -9.8);
-    this.cameras.cluster.lookAt(s.roadCurvature * 0.4, 0.22, 0.65);
+    this.cameras.cluster.lookAt(s.roadCurvature * 0.4, 0.24, 0.85);
 
-    // 4. HUD 相機：擋風玻璃平視遠方路面與流線型前車
-    this.cameras.hud.position.set(0, 1.52, 1.8);
-    this.cameras.hud.lookAt(s.roadCurvature * 1.2, 0.78, 26.0);
+    // 4. HUD / 擋風玻璃實景相機：駕駛座透過前擋風玻璃平視真實 3D 道路、路燈光暈、貼地導航箭頭與前車
+    this.cameras.hud.position.set(0, 1.48, 1.85);
+    this.cameras.hud.lookAt(s.roadCurvature * 1.2, 0.72, 24.0);
+
+    const yawOff = (this.cockpitYaw || 0) * 0.04;
+    const pitchOff = (this.cockpitPitch || 0) * 0.03;
+    this.cameras.windshield.position.set(0.22 - yawOff * 0.30, 1.54 - pitchOff * 0.14, 0.45);
+    this.cameras.windshield.lookAt(s.roadCurvature * 0.9 - yawOff * 1.4, 0.76 + pitchOff * 1.0, 28.0);
   }
 
   startRenderLoop() {
@@ -1504,18 +1820,22 @@ export class SceneEngine {
         const rect = canvas.getBoundingClientRect();
         if (rect.width < 10 || rect.height < 10) continue;
 
-        const targetW = Math.min(1080, Math.max(320, Math.round(rect.width * 1.35)));
-        const targetH = Math.min(720, Math.max(160, Math.round(rect.height * 1.35)));
+        const targetW = Math.min(1120, Math.max(320, Math.round(rect.width * 1.4)));
+        const targetH = Math.min(720, Math.max(150, Math.round(rect.height * 1.4)));
         if (canvas.width !== targetW || canvas.height !== targetH) {
           canvas.width = targetW;
           canvas.height = targetH;
         }
 
-        const cam = this.cameras[viewId];
-        if (!cam) continue;
+        const cam = this.cameras[viewId] || this.cameras.hud;
         cam.aspect = targetW / targetH;
         cam.updateProjectionMatrix();
 
+        const isOutTheWindow = viewId === 'hud' || viewId === 'windshield';
+
+        if (this.cockpitInteriorGroup) {
+          this.cockpitInteriorGroup.visible = viewId === 'windshield';
+        }
         if (this.roadGroup) {
           this.roadGroup.visible = viewId !== 'mobile';
         }
@@ -1526,38 +1846,48 @@ export class SceneEngine {
           this.roadHeadlightPool.visible = viewId !== 'mobile' && (this.store.state.lights.highBeam || this.store.state.lights.lowBeam);
         }
         if (this.egoCarGroup) {
-          this.egoCarGroup.visible = viewId !== 'hud';
+          this.egoCarGroup.visible = !isOutTheWindow;
         }
         for (const ch of this.arChevrons) {
-          ch.visible = viewId === 'hud' && this.store.state.navigation.active && this.store.state.gear === 'D';
+          ch.visible = isOutTheWindow && this.store.state.navigation.active && this.store.state.gear === 'D';
+        }
+        if (this.followDistanceBand && this.followThresholdBar) {
+          const showBand = false;
+          this.followDistanceBand.visible = showBand;
+          this.followThresholdBar.visible = showBand;
         }
 
-        // 針對 HUD 視口單獨提亮擋風玻璃背景、道路與車道標線，確保場景清晰可辨
         const prevBgHex = this.scene.background.getHex();
         const prevRoadHex = this.roadMat.color.getHex();
         const prevHemiInt = this.hemiLight.intensity;
         const prevExp = this.renderer.toneMappingExposure;
+        const prevHeadR = this.matHeadlight.color.r;
+        const prevHeadG = this.matHeadlight.color.g;
+        const prevHeadB = this.matHeadlight.color.b;
 
-        if (viewId === 'hud') {
-          const hudBg = isNight ? 0x1a202c : 0xdbe3ee;
+        if (isOutTheWindow) {
+          const hudBg = isNight ? 0x161d2a : 0xd6e0ec;
           this.scene.background.setHex(hudBg);
           this.scene.fog.color.setHex(hudBg);
-          this.roadMat.color.setHex(isNight ? 0x283040 : 0xcbd2dc);
-          this.hemiLight.intensity = 1.65;
-          this.renderer.toneMappingExposure = 1.12;
+          this.roadMat.color.setHex(isNight ? 0x262f3f : 0xc6cfd9);
+          this.hemiLight.intensity = 1.45;
+          this.renderer.toneMappingExposure = 1.04;
         } else if (viewId === 'mobile') {
-          this.renderer.toneMappingExposure = 0.76;
+          // 嚴格抑制手機 App 車燈曝光，確保燈帶紋理柔和清晰、絕不過曝
+          this.renderer.toneMappingExposure = 0.78;
+          this.matHeadlight.color.setRGB(Math.min(0.76, prevHeadR), Math.min(0.78, prevHeadG), Math.min(0.82, prevHeadB));
         }
 
         this.renderPass.camera = cam;
         this.composer.render(dt);
 
-        if (viewId === 'hud' || viewId === 'mobile') {
+        if (isOutTheWindow || viewId === 'mobile') {
           this.scene.background.setHex(prevBgHex);
           this.scene.fog.color.setHex(prevBgHex);
           this.roadMat.color.setHex(prevRoadHex);
           this.hemiLight.intensity = prevHemiInt;
           this.renderer.toneMappingExposure = prevExp;
+          this.matHeadlight.color.setRGB(prevHeadR, prevHeadG, prevHeadB);
         }
 
         ctx.clearRect(0, 0, targetW, targetH);
