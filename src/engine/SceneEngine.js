@@ -1,7 +1,7 @@
 /**
  * TESLA MODEL 3 COCKPIT HMI — WEBGL2 3D PBR & POST-PROCESSING ENGINE
  * 質感與真實度大改重點：
- * 1. 對標車型升級為 Tesla Model S (2021+ Palladium 改款) 寬體低趴轎跑比例，角落標註 CC-BY 模型來源。
+ * 1. 對標車型為 Tesla Model 3 經典轎跑比例，角落標註 CC-BY 模型來源。
  * 2. 修正車頂與車窗玻璃死黑：調整全景玻璃天幕與車窗之物理材質 (Tint + Clearcoat + 環境反射)，搭配漸層柔光頂棚，呈現通透真實玻璃質感，同時確保手機 App 內車燈柔和不過曝。
  * 3. 消除邊緣鋸齒與提升陰影：啟用 WebGL2 4x MSAA 多重採樣渲染目標 + SMAA 抗鋸齒雙重管線，並將陰影貼圖提升至 2048×2048。
  * 4. 道路與車流真實化：程序化生成柏油顆粒法線/粗糙度貼圖、車道線磨損紋理、路燈體積光暈與地面光斑、夜間濕潤路面反射；周圍車輛全面採用真實流線轎跑輪廓。
@@ -245,7 +245,7 @@ export class SceneEngine {
     ctx.fillRect(0, 0, size, size);
 
     ctx.translate(size / 2, size / 2);
-    // Model S Arachnid 21" 雙叉輪轂造型
+    // Model 3 經典輪轂造型
     for (let i = 0; i < 10; i++) {
       ctx.save();
       ctx.rotate((i * Math.PI * 2) / 10);
@@ -285,7 +285,7 @@ export class SceneEngine {
     topStrip.rotation.x = Math.PI / 2;
     envScene.add(topStrip);
 
-    // 左右對稱柔光燈條（勾勒 Model S 寬體肩線與車窗玻璃過渡）
+    // 左右對稱柔光燈條（勾勒 Model 3 車身肩線與車窗玻璃過渡）
     const sideStripGeo = new THREE.PlaneGeometry(38, 4.2);
     const sideMat = new THREE.MeshBasicMaterial({
       color: isNight ? 0x5c687a : 0xdbe2ec,
@@ -646,7 +646,7 @@ export class SceneEngine {
   }
 
   /**
-   * 建立與 Model S 一致的流線型轎跑輪廓前車與周圍車輛（絕不使用方塊，並附夜間路面尾燈紅光倒影）
+   * 建立流線型轎跑輪廓前車與周圍車輛（絕不使用方塊，並附夜間路面尾燈紅光倒影）
    */
   createSleekSedanSilhouetteGroup(isLeadTarget = false) {
     const g = new THREE.Group();
@@ -904,7 +904,7 @@ export class SceneEngine {
       envMapIntensity: 1.15
     });
 
-    // Model S (2021+ Palladium) 標誌性霧面黑化窗框飾條 (Satin Black Chrome Delete)
+    // Model 3 標誌性霧面黑化窗框飾條 (Satin Black Chrome Delete)
     this.aeroInsertMat = new THREE.MeshStandardMaterial({
       color: 0x242830,
       metalness: 0.65,
@@ -992,7 +992,7 @@ export class SceneEngine {
     this.proceduralEgoCar = new THREE.Group();
     this.proceduralEgoCar.name = 'proceduralEgoCar';
 
-    // Model S (2021+ Refresh) 修長寬體溜背轎跑比例
+    // Model 3 修長溜背轎跑比例
     const profile = new THREE.Shape();
     profile.moveTo(-2.18, 0.15);
     profile.quadraticCurveTo(-2.22, 0.44, -2.06, 0.70);
@@ -1152,7 +1152,7 @@ export class SceneEngine {
         }
       },
       (err) => {
-        console.warn('[SceneEngine] GLB load fallback active (Model S procedural model maintained):', err);
+        console.warn('[SceneEngine] GLB load fallback active (Model 3 procedural model maintained):', err);
       }
     );
   }
@@ -1829,7 +1829,7 @@ export class SceneEngine {
     );
     this.cameras.center.lookAt(0, showShowcaseView ? 0.48 : 0.66, showShowcaseView ? 0.0 : 5.8);
 
-    // 3. 儀錶盤相機 (Model S 8:3 橫條小屏專用平順視角)
+    // 3. 儀錶盤相機 (概念 8:3 橫條小屏專用平順視角)
     this.cameras.cluster.position.set(0, 2.95, -9.8);
     this.cameras.cluster.lookAt(s.roadCurvature * 0.4, 0.24, 0.85);
 

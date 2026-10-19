@@ -3,38 +3,20 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const PORT = 8158;
-const CDP_PORT = 9278;
+const PORT = 8000;
+const CDP_PORT = 9288;
 
-// 截圖儲存目錄
+// 本地項目截圖儲存目錄
 const LOCAL_DIR = path.join(__dirname, 'screenshots');
-
 if (!fs.existsSync(LOCAL_DIR)) fs.mkdirSync(LOCAL_DIR, { recursive: true });
 
-// 1. 本地靜態文件伺服器
-const server = http.createServer((req, res) => {
-  let reqPath = decodeURI(req.url.split('?')[0]);
-  if (reqPath === '/') reqPath = '/index.html';
-  const filePath = path.join(__dirname, reqPath);
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    const ext = path.extname(filePath);
-    const mimeMap = {
-      '.html': 'text/html; charset=utf-8',
-      '.js': 'application/javascript; charset=utf-8',
-      '.css': 'text/css; charset=utf-8',
-      '.json': 'application/json',
-      '.glb': 'model/gltf-binary',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.svg': 'image/svg+xml'
-    };
-    res.writeHead(200, { 'Content-Type': mimeMap[ext] || 'application/octet-stream' });
-    fs.createReadStream(filePath).pipe(res);
-  } else {
-    res.writeHead(404);
-    res.end('Not found');
-  }
-});
+// Artifacts 截圖儲存目錄
+const ARTIFACT_DIR = path.resolve(__dirname, '../../.gemini/antigravity/brain/aac3bfcb-9c13-44b7-8635-d64d6c19ee30/screenshots');
+if (!fs.existsSync(ARTIFACT_DIR)) {
+  try {
+    fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+  } catch (e) {}
+}
 
 // 29 大全量狀態規格矩陣
 const CAPTURE_SPECS = [
@@ -144,7 +126,7 @@ const CAPTURE_SPECS = [
     padding: 8
   },
 
-  // 模組 C：17" 旗艦中控橫屏主界面與 6 大功能彈窗
+  // 模組 C：15.4" 旗艦中控橫屏主界面與 6 大功能彈窗
   {
     id: 'center_main',
     name: '中控屏_主駕導航與3D車道感知',
@@ -436,8 +418,8 @@ const CAPTURE_SPECS = [
   }
 ];
 
-server.listen(PORT, async () => {
-  console.log(`[ScreenCapture] 伺服器啟動: http://localhost:${PORT}`);
+async function run() {
+  console.log(`[ScreenCapture] 直連本地伺服器: http://localhost:${PORT}/`);
 
   // 啟動高分辨率無頭 Chrome
   const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
@@ -446,6 +428,8 @@ server.listen(PORT, async () => {
     '--window-size=2560,1440',
     '--hide-scrollbars',
     '--force-device-scale-factor=1',
+    '--disable-gpu',
+    '--no-sandbox',
     `http://localhost:${PORT}/`
   ]);
 
@@ -647,7 +631,11 @@ server.listen(PORT, async () => {
         if (shot && shot.data) {
           const buf = Buffer.from(shot.data, 'base64');
           fs.writeFileSync(path.join(LOCAL_DIR, filename), buf);
-          fs.writeFileSync(path.join(ARTIFACT_DIR, filename), buf);
+          if (fs.existsSync(ARTIFACT_DIR)) {
+            try {
+              fs.writeFileSync(path.join(ARTIFACT_DIR, filename), buf);
+            } catch (e) {}
+          }
           console.log(`  ✓ 成功儲存 (${(buf.length / 1024).toFixed(1)} KB) 尺寸: ${clip ? `${clip.width}x${clip.height}` : '全屏'}`);
         } else {
           console.error(`  ✗ 截圖失敗: ${filename}`);
@@ -657,9 +645,13 @@ server.listen(PORT, async () => {
 
     console.log(`\n🎉 全部 58 張全量無裁切截圖已全部生成並同步完畢！`);
 
-    ws.close();
-    chrome.kill();
-    server.close();
+    try { ws.close(); } catch (e) {}
+    try { chrome.kill(); } catch (e) {}
     process.exit(0);
   });
+}
+
+run().catch(err => {
+  console.error('[ScreenCapture] 執行異常:', err);
+  process.exit(1);
 });

@@ -129,7 +129,7 @@ export class CockpitApp {
           <nav class="view-switcher" aria-label="五端視角切換">
             <button class="view-tab ${focused === 'overview' ? 'is-active' : ''}" data-view-target="overview">${icon('grid', 'tab-icon')}<span>3D 座艙總覽</span></button>
             <button class="view-tab ${focused === 'mobile' ? 'is-active' : ''}" data-view-target="mobile">${icon('phone', 'tab-icon')}<span>手機 App</span></button>
-            <button class="view-tab ${focused === 'center' ? 'is-active' : ''}" data-view-target="center">${icon('tiltScreen', 'tab-icon')}<span>17" 中控屏</span></button>
+            <button class="view-tab ${focused === 'center' ? 'is-active' : ''}" data-view-target="center">${icon('tiltScreen', 'tab-icon')}<span>15.4" 中控屏</span></button>
             <button class="view-tab ${focused === 'passenger' ? 'is-active' : ''}" data-view-target="passenger">${icon('video', 'tab-icon')}<span>副駕娛樂屏</span></button>
             <button class="view-tab ${focused === 'cluster' ? 'is-active' : ''}" data-view-target="cluster">${icon('steering', 'tab-icon')}<span>8:3 儀錶盤</span></button>
             <button class="view-tab ${focused === 'hud' ? 'is-active' : ''}" data-view-target="hud">${icon('navigation', 'tab-icon')}<span>擋風玻璃 HUD</span></button>
@@ -287,13 +287,13 @@ export class CockpitApp {
                     </div>
                   </div>
 
-                  <!-- 中央：Model 3 17 吋懸浮橫屏 (比例 2200:1300，支援向駕駛側傾斜) -->
+                  <!-- 中央：Model 3 15.4 吋懸浮橫屏 (比例 16:10，支援向駕駛側傾斜) -->
                   <section class="screen-unit unit-center" data-screen-id="center">
                     <div class="screen-unit-label">
-                      <span>17" 中控橫屏 (2200:1300 · <em id="tilt-status-label">向駕駛傾斜</em>)</span>
+                      <span>15.4" 中控橫屏 (16:10 · <em id="tilt-status-label">向駕駛傾斜</em>)</span>
                       <div class="unit-label-actions">
-                        <button class="tilt-quick-btn" data-action="cycle-center-tilt" title="切換 17 吋中控屏左右傾斜角度">${icon('tiltScreen')}<span>傾斜</span></button>
-                        <button class="focus-toggle-btn" data-view-target="center" title="放大檢視 17 吋中控屏">${icon('expand')}</button>
+                        <button class="tilt-quick-btn" data-action="cycle-center-tilt" title="切換 15.4 吋中控屏左右傾斜角度">${icon('tiltScreen')}<span>傾斜</span></button>
+                        <button class="focus-toggle-btn" data-view-target="center" title="放大檢視 15.4 吋中控屏">${icon('expand')}</button>
                       </div>
                     </div>
                     <div class="center-tilt-pivot" id="center-tilt-pivot" data-tilt="${tilt}">
@@ -2832,7 +2832,7 @@ export class CockpitApp {
       </div>
 
       <div class="demo-group">
-        <div class="demo-group-title">17" 屏幕傾斜、光影與車漆</div>
+        <div class="demo-group-title">15.4" 屏幕傾斜、光影與車漆</div>
 
         <div class="demo-row">
           <span class="demo-label">中控傾斜</span>

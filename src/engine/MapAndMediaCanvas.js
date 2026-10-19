@@ -23,6 +23,12 @@ export class MapAndMediaEngine {
     this.clusterEnergyCtx = null;
     this.camera360Canvas = null;
     this.camera360Ctx = null;
+    this.climateCabinCanvas = null;
+    this.climateCabinCtx = null;
+    this.chargingCurveCanvas = null;
+    this.chargingCurveCtx = null;
+    this.voiceWaveCanvas = null;
+    this.voiceWaveCtx = null;
 
     this.zoom = 14.2;
     this.targetZoom = 14.2;
@@ -391,6 +397,78 @@ export class MapAndMediaEngine {
         }
       });
     }
+  }
+
+  /**
+   * 畫布高 DPI 與父容器自適應監聽器：徹底杜絕全屏彈窗首次展開時畫布預設 300×150 變形問題
+   */
+  setupCanvasDpiAutoResize(canvasEl, redrawCallback) {
+    if (!canvasEl) return;
+    const syncSize = () => {
+      if (!canvasEl.isConnected) return;
+      const rect = canvasEl.getBoundingClientRect();
+      let w = rect.width;
+      let h = rect.height;
+      if (w < 20 || h < 20) {
+        const parentRect = canvasEl.parentElement ? canvasEl.parentElement.getBoundingClientRect() : null;
+        if (parentRect && parentRect.width >= 20 && parentRect.height >= 20) {
+          w = parentRect.width;
+          h = parentRect.height;
+        }
+      }
+      if (w >= 20 && h >= 20) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const cw = Math.round(w * dpr);
+        const ch = Math.round(h * dpr);
+        if (canvasEl.width !== cw || canvasEl.height !== ch) {
+          canvasEl.width = cw;
+          canvasEl.height = ch;
+        }
+        if (typeof redrawCallback === 'function') {
+          redrawCallback();
+        }
+      }
+    };
+
+    // 立即同步，並在下一幀二次校驗
+    syncSize();
+    requestAnimationFrame(syncSize);
+
+    if (typeof ResizeObserver !== 'undefined' && canvasEl.parentElement && !canvasEl.dataset.hasResizeObs) {
+      canvasEl.dataset.hasResizeObs = 'true';
+      const ro = new ResizeObserver(() => {
+        syncSize();
+      });
+      ro.observe(canvasEl.parentElement);
+      ro.observe(canvasEl);
+    }
+  }
+
+  registerClimateCabinCanvas(canvasEl) {
+    if (!canvasEl) return;
+    this.climateCabinCanvas = canvasEl;
+    this.climateCabinCtx = canvasEl.getContext('2d');
+    this.setupCanvasDpiAutoResize(canvasEl, () => {
+      this.renderClimateCabinCanvas(performance.now());
+    });
+  }
+
+  registerChargingCurveCanvas(canvasEl) {
+    if (!canvasEl) return;
+    this.chargingCurveCanvas = canvasEl;
+    this.chargingCurveCtx = canvasEl.getContext('2d');
+    this.setupCanvasDpiAutoResize(canvasEl, () => {
+      this.renderChargingCurveCanvas(performance.now());
+    });
+  }
+
+  registerVoiceWaveCanvas(canvasEl) {
+    if (!canvasEl) return;
+    this.voiceWaveCanvas = canvasEl;
+    this.voiceWaveCtx = canvasEl.getContext('2d');
+    this.setupCanvasDpiAutoResize(canvasEl, () => {
+      this.renderVoiceWaveCanvas(performance.now());
+    });
   }
 
   bindMapInteractions(canvasEl) {
@@ -1170,7 +1248,7 @@ export class MapAndMediaEngine {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // 鳥瞰 Model S 車身輪廓
+    // 鳥瞰 Model 3 車身輪廓
     const carW = Math.min(48, rightW * 0.30);
     const carH = carW * 2.15;
     ctx.fillStyle = '#64748b';
@@ -1778,10 +1856,17 @@ export class MapAndMediaEngine {
    * 全屏空調頁：繪製車內俯視輪廓、出風口、動態風向氣流波紋與前後排座椅加熱狀態
    */
   renderClimateCabinCanvas(now) {
-    const canvas = document.getElementById('canvas-climate-cabin');
+    const canvas = this.climateCabinCanvas || document.getElementById('canvas-climate-cabin');
     if (!canvas || !canvas.isConnected) return;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width < 20 || rect.height < 20) return;
+    let rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) {
+      const parentRect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+      if (parentRect && parentRect.width >= 20 && parentRect.height >= 20) {
+        rect = parentRect;
+      } else {
+        return;
+      }
+    }
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const cw = Math.round(rect.width * dpr);
@@ -1919,10 +2004,17 @@ export class MapAndMediaEngine {
    * 全屏充電頁：繪製高壓快充功率曲線 (kW vs 電量 %)
    */
   renderChargingCurveCanvas(now) {
-    const canvas = document.getElementById('canvas-charging-curve');
+    const canvas = this.chargingCurveCanvas || document.getElementById('canvas-charging-curve');
     if (!canvas || !canvas.isConnected) return;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width < 20 || rect.height < 20) return;
+    let rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) {
+      const parentRect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+      if (parentRect && parentRect.width >= 20 && parentRect.height >= 20) {
+        rect = parentRect;
+      } else {
+        return;
+      }
+    }
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const cw = Math.round(rect.width * dpr);
@@ -2026,10 +2118,17 @@ export class MapAndMediaEngine {
    * 全屏語音頁：繪製聆聽 / 識別 / 執行三種狀態的實時多頻聲波動畫
    */
   renderVoiceWaveCanvas(now) {
-    const canvas = document.getElementById('canvas-voice-wave');
+    const canvas = this.voiceWaveCanvas || document.getElementById('canvas-voice-wave');
     if (!canvas || !canvas.isConnected) return;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width < 20 || rect.height < 20) return;
+    let rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) {
+      const parentRect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+      if (parentRect && parentRect.width >= 20 && parentRect.height >= 20) {
+        rect = parentRect;
+      } else {
+        return;
+      }
+    }
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const cw = Math.round(rect.width * dpr);
