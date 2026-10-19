@@ -4,7 +4,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const PORT = 8000;
-const CDP_PORT = 9288;
+const CDP_PORT = 9295;
 
 // 本地項目截圖儲存目錄
 const LOCAL_DIR = path.join(__dirname, 'screenshots');
@@ -18,12 +18,12 @@ if (!fs.existsSync(ARTIFACT_DIR)) {
   } catch (e) {}
 }
 
-// 29 大全量狀態規格矩陣
+// 29 大全量狀態規格矩陣（全部採用 2560×1440 真實瀏覽器全屏視口，保留頂部導航欄、狀態燈、3D道路與底欄，徹底杜絕局部裁剪）
 const CAPTURE_SPECS = [
   // 模組 A：座艙總覽
   {
     id: 'overview',
-    name: '3D真實座艙透視總覽',
+    name: '3D真實座艙透視總覽 (瀏覽器全景視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'overview';
@@ -31,16 +31,17 @@ const CAPTURE_SPECS = [
         st.system.showDesignDoc = false;
         st.system.showChecklistModal = false;
       });
+      window.__TESLA_HMI__.app.drawerOpen = false;
+      document.querySelector('.cockpit-shell')?.setAttribute('data-drawer', 'closed');
       document.getElementById('demo-control-panel')?.classList.remove('is-open');
     `,
-    selector: '.screens-stage',
-    padding: 0
+    fullViewport: true
   },
 
-  // 模組 B：手機 App 6 大完整子頁面（消除內部滾動截斷，展示長圖）
+  // 模組 B：手機 App 6 大子頁面（切換至手機端視角，真實呈現居中立體 iPhone 及其頁面內容）
   {
     id: 'mobile_home',
-    name: '手機App_01首頁與快捷車控',
+    name: '手機App_01首頁與快捷車控 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'mobile';
@@ -49,15 +50,14 @@ const CAPTURE_SPECS = [
         st.system.showDesignDoc = false;
         st.system.showChecklistModal = false;
       });
-      document.getElementById('demo-control-panel')?.classList.remove('is-open');
+      window.__TESLA_HMI__.app.drawerOpen = false;
+      document.querySelector('.cockpit-shell')?.setAttribute('data-drawer', 'closed');
     `,
-    selector: '.physical-iphone-frame',
-    isMobile: true,
-    padding: 8
+    fullViewport: true
   },
   {
     id: 'mobile_location',
-    name: '手機App_02定位小地圖與發送目的地',
+    name: '手機App_02定位小地圖與發送目的地 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'mobile';
@@ -65,13 +65,11 @@ const CAPTURE_SPECS = [
         st.system.centerActiveModal = null;
       });
     `,
-    selector: '.physical-iphone-frame',
-    isMobile: true,
-    padding: 8
+    fullViewport: true
   },
   {
     id: 'mobile_controls',
-    name: '手機App_03車控門鎖網格與鑰匙管理',
+    name: '手機App_03車控門鎖網格與鑰匙管理 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'mobile';
@@ -79,13 +77,11 @@ const CAPTURE_SPECS = [
         st.system.centerActiveModal = null;
       });
     `,
-    selector: '.physical-iphone-frame',
-    isMobile: true,
-    padding: 8
+    fullViewport: true
   },
   {
     id: 'mobile_climate',
-    name: '手機App_04溫控模式與預約出發',
+    name: '手機App_04溫控模式與預約出發 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'mobile';
@@ -93,13 +89,11 @@ const CAPTURE_SPECS = [
         st.system.centerActiveModal = null;
       });
     `,
-    selector: '.physical-iphone-frame',
-    isMobile: true,
-    padding: 8
+    fullViewport: true
   },
   {
     id: 'mobile_charging',
-    name: '手機App_05充電功率上限與行程能耗歷史',
+    name: '手機App_05充電功率上限與行程能耗歷史 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'mobile';
@@ -107,13 +101,11 @@ const CAPTURE_SPECS = [
         st.system.centerActiveModal = null;
       });
     `,
-    selector: '.physical-iphone-frame',
-    isMobile: true,
-    padding: 8
+    fullViewport: true
   },
   {
     id: 'mobile_service',
-    name: '手機App_06軟件版本OTA與官方保養預約',
+    name: '手機App_06軟件版本OTA與官方保養預約 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'mobile';
@@ -121,101 +113,96 @@ const CAPTURE_SPECS = [
         st.system.centerActiveModal = null;
       });
     `,
-    selector: '.physical-iphone-frame',
-    isMobile: true,
-    padding: 8
+    fullViewport: true
   },
 
-  // 模組 C：15.4" 旗艦中控橫屏主界面與 6 大功能彈窗
+  // 模組 C：15.4" 旗艦中控橫屏主界面與 6 大功能彈窗（全屏視口呈現中控特寫與彈窗浮層）
   {
     id: 'center_main',
-    name: '中控屏_主駕導航與3D車道感知',
+    name: '中控屏_主駕導航與3D車道感知 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = null;
+        st.system.showDesignDoc = false;
+        st.system.showChecklistModal = false;
       });
+      window.__TESLA_HMI__.app.drawerOpen = false;
+      document.querySelector('.cockpit-shell')?.setAttribute('data-drawer', 'closed');
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_apps',
-    name: '中控屏_車載應用中心九宮格',
+    name: '中控屏_車載應用中心九宮格 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = 'apps';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_charging',
-    name: '中控屏_高壓電池與超級充電管理',
+    name: '中控屏_高壓電池與超級充電管理 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = 'charging';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_camera360',
-    name: '中控屏_360環視全景與相機視角',
+    name: '中控屏_360環視全景與相機視角 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = 'camera360';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_phone',
-    name: '中控屏_藍牙電話與通訊錄撥號',
+    name: '中控屏_藍牙電話與通訊錄撥號 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = 'phone';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_voice',
-    name: '中控屏_車載自然語音助理交互',
+    name: '中控屏_車載自然語音助理交互 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = 'voice';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_climate',
-    name: '中控屏_雙溫區熱泵空調大彈層',
+    name: '中控屏_雙溫區熱泵空調大彈層 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
         st.system.centerActiveModal = 'climate';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
 
-  // 模組 D：中控車輛設置中心 7 大選項卡
+  // 模組 D：中控車輛設置中心 7 大選項卡（全屏視口呈現中控設置面板）
   {
     id: 'center_settings_display',
-    name: '中控設置_01顯示與電動向日葵傾斜',
+    name: '中控設置_01顯示與電動向日葵傾斜 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -223,12 +210,11 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'display';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_settings_lights',
-    name: '中控設置_02燈光與外部照明雨刮',
+    name: '中控設置_02燈光與外部照明雨刮 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -236,12 +222,11 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'lights';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_settings_locks',
-    name: '中控設置_03車門車鎖與鑰匙管理',
+    name: '中控設置_03車門車鎖與鑰匙管理 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -249,12 +234,11 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'locks';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_settings_autopilot',
-    name: '中控設置_04Autopilot輔助駕駛與轉向手感',
+    name: '中控設置_04Autopilot輔助駕駛與轉向手感 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -262,12 +246,11 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'autopilot';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_settings_safety',
-    name: '中控設置_05安全哨兵與四輪胎壓TPMS',
+    name: '中控設置_05安全哨兵與四輪胎壓TPMS (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -275,12 +258,11 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'safety';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_settings_schedule',
-    name: '中控設置_06日程預約出發與離峰充電',
+    name: '中控設置_06日程預約出發與離峰充電 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -288,12 +270,11 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'schedule';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'center_settings_service',
-    name: '中控設置_07OTA升級與保養維護模式',
+    name: '中控設置_07OTA升級與保養維護模式 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'center';
@@ -301,76 +282,75 @@ const CAPTURE_SPECS = [
         st.system.settingsTab = 'service';
       });
     `,
-    selector: '.bezel-center',
-    padding: 4
+    fullViewport: true
   },
 
-  // 模組 E：副駕娛樂屏 3 大 Tab
+  // 模組 E：副駕娛樂屏 3 大 Tab (全屏視口)
   {
     id: 'passenger_music',
-    name: '副駕娛樂屏_音樂播放與24Bit頻譜',
+    name: '副駕娛樂屏_音樂播放與24Bit頻譜 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'passenger';
         st.media.activeTab = 'music';
+        st.system.centerActiveModal = null;
       });
     `,
-    selector: '.bezel-passenger',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'passenger_video',
-    name: '副駕娛樂屏_動態短片劇場',
+    name: '副駕娛樂屏_動態短片劇場 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'passenger';
         st.media.activeTab = 'video';
+        st.system.centerActiveModal = null;
       });
     `,
-    selector: '.bezel-passenger',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'passenger_game',
-    name: '副駕娛樂屏_街機遊戲中心',
+    name: '副駕娛樂屏_街機遊戲中心 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'passenger';
         st.media.activeTab = 'game';
+        st.system.centerActiveModal = null;
       });
     `,
-    selector: '.bezel-passenger',
-    padding: 4
+    fullViewport: true
   },
 
-  // 模組 F：駕駛儀錶盤與 HUD
+  // 模組 F：駕駛儀錶盤與 HUD (全屏視口)
   {
     id: 'cluster',
-    name: '駕駛儀錶盤_8比3極寬比例主駕屏',
+    name: '駕駛儀錶盤_8比3極寬比例主駕屏 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'cluster';
+        st.system.centerActiveModal = null;
       });
     `,
-    selector: '.bezel-cluster',
-    padding: 4
+    fullViewport: true
   },
   {
     id: 'hud',
-    name: '擋風玻璃HUD_極簡平視投影',
+    name: '擋風玻璃HUD_極簡平視投影 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'hud';
+        st.system.centerActiveModal = null;
       });
     `,
-    selector: '.hud-frameless-projection',
-    padding: 6
+    fullViewport: true
   },
 
-  // 模組 G：全局聯動抽屜面板與設計/驗收彈窗
+  // 模組 G：全局聯動抽屜面板與設計/驗收彈窗 (全屏視口)
   {
     id: 'control_drawer',
-    name: '全局控制面板_五端聯動抽屜',
+    name: '全局控制面板_五端聯動抽屜 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'overview';
@@ -381,12 +361,11 @@ const CAPTURE_SPECS = [
       window.__TESLA_HMI__.app.drawerOpen = true;
       document.querySelector('.cockpit-shell')?.setAttribute('data-drawer', 'open');
     `,
-    selector: '#demo-control-sidebar',
-    padding: 6
+    fullViewport: true
   },
   {
     id: 'design_doc',
-    name: '全局模態框_設計規格與架構文檔',
+    name: '全局模態框_設計規格與架構文檔 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'overview';
@@ -397,12 +376,11 @@ const CAPTURE_SPECS = [
       window.__TESLA_HMI__.app.drawerOpen = false;
       document.querySelector('.cockpit-shell')?.setAttribute('data-drawer', 'closed');
     `,
-    selector: '.doc-modal-card',
-    padding: 10
+    fullViewport: true
   },
   {
     id: 'acceptance_checklist',
-    name: '全局模態框_量產級驗收自檢清單',
+    name: '全局模態框_量產級驗收自檢清單 (全屏視口)',
     setup: `
       window.__TESLA_HMI__.store.update(st => {
         st.system.focusedScreen = 'overview';
@@ -413,23 +391,19 @@ const CAPTURE_SPECS = [
       window.__TESLA_HMI__.app.drawerOpen = false;
       document.querySelector('.cockpit-shell')?.setAttribute('data-drawer', 'closed');
     `,
-    selector: '.doc-modal-card',
-    padding: 10
+    fullViewport: true
   }
 ];
 
 async function run() {
   console.log(`[ScreenCapture] 直連本地伺服器: http://localhost:${PORT}/`);
 
-  // 啟動高分辨率無頭 Chrome
+  // 啟動高分辨率無頭 Chrome (強制視口 2560x1440，保留 WebGL 原生渲染支持)
   const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--headless=new',
     `--remote-debugging-port=${CDP_PORT}`,
     '--window-size=2560,1440',
     '--hide-scrollbars',
-    '--force-device-scale-factor=1',
-    '--disable-gpu',
-    '--no-sandbox',
     `http://localhost:${PORT}/`
   ]);
 
@@ -477,72 +451,26 @@ async function run() {
     await send('Runtime.enable');
     await send('DOM.enable');
 
-    const waitTime = process.argv.length > 2 ? 3500 : 12000;
-    console.log(`[CDP] 等待頁面與模型就緒 (${waitTime / 1000}s)...`);
-    await new Promise(r => setTimeout(r, waitTime));
-
-    // 注入防裁切的全局輔助樣式（讓手機端與模態框在需要長圖時自然伸展）
-    await send('Runtime.evaluate', {
-      expression: `
-        (() => {
-          const style = document.createElement('style');
-          style.id = 'capture-anti-clipping-style';
-          style.textContent = \`
-            /* 手機長頁面防裁切模式 */
-            .cockpit-shell[data-view="mobile"].capture-unfold-mobile .screens-stage {
-              display: flex !important;
-              justify-content: center !important;
-              align-items: flex-start !important;
-              height: auto !important;
-              min-height: 100vh !important;
-              overflow: visible !important;
-              padding: 24px 0 !important;
-            }
-            .cockpit-shell[data-view="mobile"].capture-unfold-mobile .unit-mobile {
-              display: flex !important;
-              width: 390px !important;
-              height: auto !important;
-              max-height: none !important;
-              margin: 0 auto !important;
-              transform: none !important;
-              animation: none !important;
-            }
-            .cockpit-shell[data-view="mobile"].capture-unfold-mobile .physical-iphone-frame {
-              height: auto !important;
-              max-height: none !important;
-              overflow: visible !important;
-              padding: 10px !important;
-            }
-            .cockpit-shell[data-view="mobile"].capture-unfold-mobile .mobile-screen-inner {
-              height: auto !important;
-              min-height: 720px !important;
-              max-height: none !important;
-              overflow: visible !important;
-            }
-            .cockpit-shell[data-view="mobile"].capture-unfold-mobile .mobile-ui-layer {
-              height: auto !important;
-              min-height: none !important;
-              overflow: visible !important;
-            }
-            .cockpit-shell[data-view="mobile"].capture-unfold-mobile .mobile-page {
-              height: auto !important;
-              max-height: none !important;
-              overflow: visible !important;
-            }
-            /* 隱藏截圖時多餘的光標 */
-            * { cursor: default !important; }
-          \`;
-          document.head.appendChild(style);
-        })();
-      `
-    });
+    console.log('[CDP] 正在校驗 3D 數字孿生模型與車流渲染就緒狀態...');
+    for (let i = 0; i < 40; i++) {
+      const isLoaded = await send('Runtime.evaluate', {
+        expression: `Boolean(window.__TESLA_HMI__?.sceneEngine?.glbLoaded)`
+      });
+      if (isLoaded?.result?.value) {
+        console.log(`[CDP] 3D 模型已完全載入 (耗時 ${(i * 400) / 1000}s)`);
+        break;
+      }
+      await new Promise(r => setTimeout(r, 400));
+    }
+    console.log('[CDP] 等待 3D 道路、柏油反射、路燈光暈與前車車流完全進入可視畫面 (5s)...');
+    await new Promise(r => setTimeout(r, 5000));
 
     const filterIds = process.argv.slice(2);
     const activeSpecs = filterIds.length > 0
       ? CAPTURE_SPECS.filter(s => filterIds.includes(s.id))
       : CAPTURE_SPECS;
 
-    console.log(`[CDP] 開始執行 ${activeSpecs.length} 大狀態 × 2 主題（共 ${activeSpecs.length * 2} 張）無裁切截圖...`);
+    console.log(`[CDP] 開始執行 ${activeSpecs.length} 大狀態 × 2 主題（共 ${activeSpecs.length * 2} 張）無裁切真實全屏截圖...`);
 
     const themes = [
       { mode: 'night', label: '夜間深色' },
@@ -552,7 +480,7 @@ async function run() {
     let count = 0;
 
     for (const theme of themes) {
-      console.log(`\n========================================`);
+      console.log(`\\n========================================`);
       console.log(`▶ 切換至【${theme.label}模式 (${theme.mode})】...`);
       console.log(`========================================`);
 
@@ -565,68 +493,26 @@ async function run() {
           });
         `
       });
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 1200));
 
       for (const spec of activeSpecs) {
         count++;
         const filename = `${theme.mode}_${spec.id}.png`;
         console.log(`[${count}/${activeSpecs.length * 2}] 正在抓取: ${theme.label} · ${spec.name} -> ${filename}`);
 
-        // 設置該項目的視圖狀態
-        await send('Runtime.evaluate', { expression: spec.setup });
-
-        // 若是手機端長頁面，啟用 capture-unfold-mobile 樣式
-        if (spec.isMobile) {
-          await send('Runtime.evaluate', {
-            expression: `document.querySelector('.cockpit-shell')?.classList.add('capture-unfold-mobile');`
-          });
-        } else {
-          await send('Runtime.evaluate', {
-            expression: `document.querySelector('.cockpit-shell')?.classList.remove('capture-unfold-mobile');`
-          });
-        }
-
-        // 等待佈局穩定與過渡動畫完成
-        await new Promise(r => setTimeout(r, 380));
-
-        // 計算元素的精確 Bounding Box
-        const rectRes = await send('Runtime.evaluate', {
+        // 設置該項目的視圖狀態並觸發一次 resize 重繪
+        await send('Runtime.evaluate', {
           expression: `
-            (() => {
-              const el = document.querySelector('${spec.selector}');
-              if (!el) return null;
-              const r = el.getBoundingClientRect();
-              return {
-                x: Math.max(0, Math.round(r.left)),
-                y: Math.max(0, Math.round(r.top)),
-                width: Math.round(r.width),
-                height: Math.round(r.height)
-              };
-            })();
-          `,
-          returnByValue: true
+            ${spec.setup};
+            window.dispatchEvent(new Event('resize'));
+          `
         });
 
-        const rect = rectRes?.result?.value;
-        let clip = null;
+        // 等待相機過渡平滑到位、DOM 彈窗展開與 3D 渲染穩定 (1200ms)
+        await new Promise(r => setTimeout(r, 1200));
 
-        if (rect && rect.width > 0 && rect.height > 0) {
-          const pad = spec.padding || 0;
-          clip = {
-            x: Math.max(0, rect.x - pad),
-            y: Math.max(0, rect.y - pad),
-            width: Math.min(2560 - Math.max(0, rect.x - pad), rect.width + pad * 2),
-            height: Math.min(1440 - Math.max(0, rect.y - pad), rect.height + pad * 2),
-            scale: 1
-          };
-        }
-
-        const shotParams = { format: 'png' };
-        if (clip) {
-          shotParams.clip = clip;
-        }
-
-        const shot = await send('Page.captureScreenshot', shotParams);
+        // 截取 2560x1440 完整真實瀏覽器全屏視口，無任何局部剪裁
+        const shot = await send('Page.captureScreenshot', { format: 'png' });
 
         if (shot && shot.data) {
           const buf = Buffer.from(shot.data, 'base64');
@@ -636,14 +522,14 @@ async function run() {
               fs.writeFileSync(path.join(ARTIFACT_DIR, filename), buf);
             } catch (e) {}
           }
-          console.log(`  ✓ 成功儲存 (${(buf.length / 1024).toFixed(1)} KB) 尺寸: ${clip ? `${clip.width}x${clip.height}` : '全屏'}`);
+          console.log(`  ✓ 成功儲存 (${(buf.length / 1024).toFixed(1)} KB) 尺寸: 2560x1440 全屏`);
         } else {
           console.error(`  ✗ 截圖失敗: ${filename}`);
         }
       }
     }
 
-    console.log(`\n🎉 全部 58 張全量無裁切截圖已全部生成並同步完畢！`);
+    console.log(`\\n🎉 全部 58 張全量無裁切截圖已全部生成並同步完畢！`);
 
     try { ws.close(); } catch (e) {}
     try { chrome.kill(); } catch (e) {}
