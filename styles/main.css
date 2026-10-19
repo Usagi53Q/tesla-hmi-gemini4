@@ -4816,12 +4816,13 @@ button.tpms-cell {
    MOBILE COMPACT SUBPAGE HEADER, AND PASSENGER/CLUSTER REFINEMENTS
    ============================================================================ */
 
-/* 1. 座艙總覽 (data-view="overview")：單一 Three.js 場景載入 3D 內裝與三塊實時紋理 3D 屏幕網格 */
+/* 1. 座艙總覽 (data-view="overview")：真實 3D 擋風玻璃道路透視 + 橫貫式儀錶台、木紋橫樑、Yoke 方向盤與三塊屏幕 */
 .cockpit-shell[data-view="overview"] #cockpit-3d-cabin {
+  display: grid !important;
+  grid-template-rows: 43% 47% 10% !important;
   position: relative !important;
   width: 100% !important;
   height: 100% !important;
-  display: block !important;
   transform: none !important;
 }
 
@@ -4833,12 +4834,12 @@ button.tpms-cell {
 .cockpit-shell[data-view="overview"] .dash-wood-decor,
 .cockpit-shell[data-view="overview"] .cockpit-steering-wheel,
 .cockpit-shell[data-view="overview"] .windshield-optical-tint {
-  display: none !important;
+  display: block !important;
 }
 
 .cockpit-shell[data-view="overview"] .cockpit-windshield-zone {
-  position: absolute !important;
-  inset: 0 !important;
+  position: relative !important;
+  inset: auto !important;
   width: 100% !important;
   height: 100% !important;
   border-radius: 18px !important;
@@ -4847,7 +4848,16 @@ button.tpms-cell {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65) !important;
 }
 
-/* 恢復 3D 座艙總覽下，三塊屏幕 (cluster/center/passenger) 正常在儀錶台展示 */
+.cockpit-shell[data-view="overview"] .cockpit-dashboard-wing {
+  position: relative !important;
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  padding: 14px 22px 4px !important;
+  justify-content: flex-end !important;
+  background: linear-gradient(180deg, #1b1f28 0%, #12151c 38%, #0c0e13 100%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
 
 /* HUD 作為擋風玻璃上的無框透明疊加層，直接疊在擋風玻璃外的 3D 道路上 */
 .cockpit-shell[data-view="overview"] .unit-hud {
