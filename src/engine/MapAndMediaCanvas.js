@@ -1,5 +1,5 @@
 /**
- * TESLA MODEL S (2021+ REFRESH) — OFFLINE VECTOR MAP, ENERGY GRAPH, 360° CAMERA & PASSENGER CINEMA ENGINE
+ * TESLA MODEL 3 — OFFLINE VECTOR MAP, ENERGY GRAPH, 360° CAMERA & PASSENGER CINEMA ENGINE
  * 質感與真實度大改重點：
  * 1. 導航地圖：100% 離線自繪多層級向量地圖，支援 6 座目的地搜尋、3 條路線選擇（最快 / 節能 / 景觀）對比預覽，並移除所有 V4/FSD 等宣傳字樣。
  * 2. 手機 App 車輛定位地圖 (Mobile Location Map)：與車機實時同步車輛經緯度、車頭朝向與導航路線，支援點擊地圖一鍵發送目的地到車。
@@ -8,7 +8,7 @@
  * 5. 副駕劇院真實可播放短片 (Procedural Short Films)：8 部短片各自擁有獨立的實時動態生成場景（灣岸星軌、極地極光、阿爾卑斯雪山、電芯熱流、風洞流線、箱根富士、機械臂協作、聲學穹頂），絕無空白方塊或真實品牌字樣。
  */
 
-import { DESTINATIONS_CATALOG } from '../state/vehicleStore.js?v=30';
+import { DESTINATIONS_CATALOG } from '../state/vehicleStore.js?v=34';
 
 export class MapAndMediaEngine {
   constructor(store) {
@@ -283,12 +283,75 @@ export class MapAndMediaEngine {
     if (!canvasEl) return;
     this.mediaCanvas = canvasEl;
     this.mediaCtx = canvasEl.getContext('2d');
+    if (canvasEl.dataset.mediaBound !== 'true') {
+      canvasEl.dataset.mediaBound = 'true';
+      canvasEl.style.cursor = 'pointer';
+      canvasEl.addEventListener('click', (e) => {
+        const s = this.store.getState();
+        const tab = s.media.activeTab;
+        if (tab === 'music') {
+          this.store.update((st) => {
+            st.media.playing = !st.media.playing;
+            if (st.media.playing) st.media.videoPlaying = false;
+          });
+          this.store.showToast(this.store.getState().media.playing ? '音樂繼續播放' : '音樂已暫停', 'info');
+        } else if (tab === 'video') {
+          this.store.update((st) => {
+            st.media.videoPlaying = !st.media.videoPlaying;
+            if (st.media.videoPlaying) st.media.playing = false;
+          });
+          this.store.showToast(this.store.getState().media.videoPlaying ? '4K 短片繼續播放' : '4K 短片已暫停', 'info');
+        } else if (tab === 'game') {
+          const rect = canvasEl.getBoundingClientRect();
+          const relX = (e.clientX - rect.left) / Math.max(1, rect.width);
+          this.store.update((st) => {
+            if (!st.media.game.running) {
+              st.media.game.running = true;
+            } else if (relX < 0.35) {
+              st.media.game.playerLane = Math.max(0, st.media.game.playerLane - 1);
+            } else if (relX > 0.65) {
+              st.media.game.playerLane = Math.min(2, st.media.game.playerLane + 1);
+            } else {
+              st.media.game.boostActive = !st.media.game.boostActive;
+            }
+          });
+        }
+      });
+    }
   }
 
   registerMobileMapCanvas(canvasEl) {
     if (!canvasEl) return;
     this.mobileMapCanvas = canvasEl;
     this.mobileMapCtx = canvasEl.getContext('2d');
+    if (canvasEl.dataset.mobMapBound !== 'true') {
+      canvasEl.dataset.mobMapBound = 'true';
+      canvasEl.style.cursor = 'pointer';
+      canvasEl.addEventListener('click', (e) => {
+        const rect = canvasEl.getBoundingClientRect();
+        const dpr = canvasEl.width / Math.max(1, rect.width);
+        const sx = (e.clientX - rect.left) * dpr;
+        const sy = (e.clientY - rect.top) * dpr;
+        const mZoom = 13.7;
+        let hitSc = null;
+        let minDist = 9999;
+        for (const sc of this.superchargers) {
+          const pt = this.latLngToScreen(sc.lat, sc.lng, canvasEl.width, canvasEl.height, mZoom, this.carLat, this.carLng);
+          const dist = Math.hypot(sx - pt.x, sy - pt.y);
+          if (dist < minDist) {
+            minDist = dist;
+            hitSc = sc;
+          }
+        }
+        if (hitSc && minDist < 42 * dpr) {
+          this.store.selectDestination(hitSc.id, true);
+        } else {
+          const curIdx = this.superchargers.findIndex((d) => d.id === this.store.getState().navigation.destinationId);
+          const nextSc = this.superchargers[(curIdx + 1) % this.superchargers.length];
+          if (nextSc) this.store.selectDestination(nextSc.id, true);
+        }
+      });
+    }
   }
 
   registerClusterEnergyCanvas(canvasEl) {
@@ -301,6 +364,33 @@ export class MapAndMediaEngine {
     if (!canvasEl) return;
     this.camera360Canvas = canvasEl;
     this.camera360Ctx = canvasEl.getContext('2d');
+    if (canvasEl.dataset.cam360Bound !== 'true') {
+      canvasEl.dataset.cam360Bound = 'true';
+      canvasEl.style.cursor = 'pointer';
+      canvasEl.addEventListener('click', (e) => {
+        const rect = canvasEl.getBoundingClientRect();
+        const rx = (e.clientX - rect.left) / Math.max(1, rect.width);
+        const ry = (e.clientY - rect.top) / Math.max(1, rect.height);
+        const views = ['surround', 'front', 'rear', 'fenderL', 'fenderR'];
+        if (rx > 0.62) {
+          const dx = rx - 0.81;
+          const dy = ry - 0.52;
+          let targetView = 'surround';
+          if (dy < -0.16) targetView = 'front';
+          else if (dy > 0.16) targetView = 'rear';
+          else if (dx < -0.05) targetView = 'fenderL';
+          else if (dx > 0.05) targetView = 'fenderR';
+          this.store.update((st) => {
+            st.camera360.activeView = targetView;
+          });
+        } else {
+          this.store.update((st) => {
+            const cur = st.camera360.activeView || 'surround';
+            st.camera360.activeView = views[(views.indexOf(cur) + 1) % views.length];
+          });
+        }
+      });
+    }
   }
 
   bindMapInteractions(canvasEl) {
@@ -384,10 +474,8 @@ export class MapAndMediaEngine {
     const canvas = this.mapCanvas;
     if (!canvas || !canvas.isConnected) return;
     const rect = canvas.getBoundingClientRect();
-    if (rect.width < 10 || rect.height < 10) return;
-
-    const w = Math.max(520, Math.round(rect.width * 1.5));
-    const h = Math.max(380, Math.round(rect.height * 1.5));
+    const w = Math.max(640, Math.round((rect.width > 20 ? rect.width : 640) * 1.5));
+    const h = Math.max(420, Math.round((rect.height > 20 ? rect.height : 420) * 1.5));
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
@@ -412,8 +500,12 @@ export class MapAndMediaEngine {
     this.carLat = wpA[0] + (wpB[0] - wpA[0]) * segT;
     this.carLng = wpA[1] + (wpB[1] - wpA[1]) * segT;
 
-    if (wpB[2] && s.navigation.nextTurnStreet !== wpB[2]) {
-      s.navigation.nextTurnStreet = wpB[2];
+    if (wpB[2]) {
+      const dirWord = s.navigation.nextTurnDirection === 'left' ? '左轉' : '右轉';
+      const formattedStreet = wpB[2].includes('轉') || wpB[2].includes('抵達') ? wpB[2] : `${wpB[2]} · 前方${dirWord}`;
+      if (s.navigation.nextTurnStreet !== formattedStreet) {
+        s.navigation.nextTurnStreet = formattedStreet;
+      }
     }
 
     if (this.followCar && !this.isPanning) {
@@ -690,15 +782,85 @@ export class MapAndMediaEngine {
     const ctx = this.mobileMapCtx;
     const s = this.store.getState();
     const isNight = s.environment.timeOfDay === 'night';
-    const mZoom = 13.7;
+    const mZoom = 13.85;
 
     ctx.save();
-    ctx.fillStyle = isNight ? '#101319' : '#e5e9f0';
+    ctx.fillStyle = isNight ? '#0f141d' : '#ebeef3';
     ctx.fillRect(0, 0, w, h);
 
-    // 路網
-    ctx.strokeStyle = isNight ? '#222834' : '#ffffff';
-    ctx.lineWidth = 2.2;
+    // 1. 水系（東京灣與皇居護城河多邊形 + 隅田川/目黑川）
+    ctx.fillStyle = isNight ? '#09182b' : '#b8d3eb';
+    for (const poly of this.waterPolygons) {
+      ctx.beginPath();
+      poly.forEach(([lat, lng], idx) => {
+        const p = this.latLngToScreen(lat, lng, w, h, mZoom, this.carLat, this.carLng);
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = isNight ? '#0c233d' : '#9ec5e6';
+    ctx.lineCap = 'round';
+    for (const riv of this.rivers) {
+      ctx.lineWidth = Math.max(3, riv.width * 0.55);
+      ctx.beginPath();
+      riv.pts.forEach(([lat, lng], idx) => {
+        const p = this.latLngToScreen(lat, lng, w, h, mZoom, this.carLat, this.carLng);
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+    }
+
+    // 2. 城市公園綠地
+    ctx.fillStyle = isNight ? '#11221c' : '#d2e7d6';
+    for (const park of this.parkPolygons) {
+      ctx.beginPath();
+      park.forEach(([lat, lng], idx) => {
+        const p = this.latLngToScreen(lat, lng, w, h, mZoom, this.carLat, this.carLng);
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 3. 街區細路網與主幹道、首都高速路網
+    ctx.strokeStyle = isNight ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.06)';
+    ctx.lineWidth = 1.0;
+    for (let lat = 35.62; lat <= 35.72; lat += 0.0045) {
+      const p1 = this.latLngToScreen(lat, 139.67, w, h, mZoom, this.carLat, this.carLng);
+      const p2 = this.latLngToScreen(lat, 139.79, w, h, mZoom, this.carLat, this.carLng);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+    for (let lng = 139.67; lng <= 139.79; lng += 0.0055) {
+      const p1 = this.latLngToScreen(35.62, lng, w, h, mZoom, this.carLat, this.carLng);
+      const p2 = this.latLngToScreen(35.72, lng, w, h, mZoom, this.carLat, this.carLng);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = isNight ? '#1e2636' : '#ffffff';
+    ctx.lineWidth = 2.0;
+    for (const sec of (this.secondaryRoads || [])) {
+      ctx.beginPath();
+      sec.forEach(([lat, lng], idx) => {
+        const p = this.latLngToScreen(lat, lng, w, h, mZoom, this.carLat, this.carLng);
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = isNight ? '#2a3447' : '#f8fafc';
+    ctx.lineWidth = 3.2;
     for (const art of this.arterialRoads) {
       ctx.beginPath();
       art.forEach(([lat, lng], idx) => {
@@ -709,11 +871,23 @@ export class MapAndMediaEngine {
       ctx.stroke();
     }
 
-    // 當前導航路線
+    ctx.strokeStyle = isNight ? '#334155' : '#cbd5e1';
+    ctx.lineWidth = 4.2;
+    for (const exp of (this.expressways || [])) {
+      ctx.beginPath();
+      exp.forEach(([lat, lng], idx) => {
+        const p = this.latLngToScreen(lat, lng, w, h, mZoom, this.carLat, this.carLng);
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+    }
+
+    // 4. 當前導航藍色路線
     const activeRoute = this.gpsRoutes[s.navigation.destinationId] || this.gpsRoutes.roppongi;
     if (s.navigation.active) {
       ctx.strokeStyle = '#3e6ae1';
-      ctx.lineWidth = 2.4;
+      ctx.lineWidth = 3.6;
       ctx.beginPath();
       activeRoute.forEach(([lat, lng], idx) => {
         const p = this.latLngToScreen(lat, lng, w, h, mZoom, this.carLat, this.carLng);
@@ -723,31 +897,69 @@ export class MapAndMediaEngine {
       ctx.stroke();
     }
 
-    // 目的地標記
+    // 5. 中文區域與地標地名
+    ctx.textAlign = 'center';
+    for (const lbl of (this.mapLabels || [])) {
+      const p = this.latLngToScreen(lbl.lat, lbl.lng, w, h, mZoom, this.carLat, this.carLng);
+      if (p.x < 24 || p.x > w - 24 || p.y < 18 || p.y > h - 18) continue;
+      ctx.font = `600 ${Math.round(10 * dpr)}px Inter, sans-serif`;
+      ctx.fillStyle = isNight ? 'rgba(203, 213, 225, 0.78)' : 'rgba(30, 41, 59, 0.82)';
+      ctx.fillText(lbl.text, p.x, p.y);
+    }
+
+    // 6. 超充站標記與站名標籤
     for (const sc of this.superchargers) {
       const isTarget = sc.id === s.navigation.destinationId;
       const pt = this.latLngToScreen(sc.lat, sc.lng, w, h, mZoom, this.carLat, this.carLng);
-      ctx.fillStyle = isTarget ? '#3e6ae1' : '#4b5563';
+      if (pt.x < 14 || pt.x > w - 14 || pt.y < 14 || pt.y > h - 14) continue;
+
+      ctx.fillStyle = isTarget ? '#3e6ae1' : (isNight ? '#1f2937' : '#ffffff');
+      ctx.strokeStyle = isTarget ? '#ffffff' : '#3e6ae1';
+      ctx.lineWidth = 1.8 * dpr;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, isTarget ? 7 : 5, 0, Math.PI * 2);
+      ctx.arc(pt.x, pt.y, (isTarget ? 7.5 : 5.5) * dpr, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
+
+      if (isTarget) {
+        const tagTxt = `${sc.name.replace('超充站', '')} (${sc.available}/${sc.total})`;
+        ctx.font = `600 ${Math.round(9.5 * dpr)}px Inter, sans-serif`;
+        const tw = ctx.measureText(tagTxt).width + 10 * dpr;
+        ctx.fillStyle = isNight ? 'rgba(15, 23, 42, 0.90)' : 'rgba(255, 255, 255, 0.92)';
+        ctx.beginPath();
+        ctx.roundRect(pt.x - tw / 2, pt.y + 9 * dpr, tw, 16 * dpr, 4 * dpr);
+        ctx.fill();
+        ctx.fillStyle = isNight ? '#f8fafc' : '#0f172a';
+        ctx.fillText(tagTxt, pt.x, pt.y + 20 * dpr);
+      }
     }
 
-    // 自車中心游標與脈衝圈
+    // 7. 自車定位游標與車頭朝向箭頭
     const carPt = this.latLngToScreen(this.carLat, this.carLng, w, h, mZoom, this.carLat, this.carLng);
-    ctx.fillStyle = 'rgba(62, 106, 225, 0.20)';
+    ctx.fillStyle = 'rgba(62, 106, 225, 0.24)';
     ctx.beginPath();
-    ctx.arc(carPt.x, carPt.y, 18, 0, Math.PI * 2);
+    ctx.arc(carPt.x, carPt.y, 16 * dpr, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.save();
+    ctx.translate(carPt.x, carPt.y);
+    ctx.rotate(this.carHeadingRad + Math.PI / 2);
     ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.5 * dpr;
     ctx.beginPath();
-    ctx.arc(carPt.x, carPt.y, 7, 0, Math.PI * 2);
+    ctx.arc(0, 0, 8.5 * dpr, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = '#3e6ae1';
     ctx.beginPath();
-    ctx.arc(carPt.x, carPt.y, 4.5, 0, Math.PI * 2);
+    ctx.moveTo(0, -5.5 * dpr);
+    ctx.lineTo(4.2 * dpr, 4.2 * dpr);
+    ctx.lineTo(0, 2.0 * dpr);
+    ctx.lineTo(-4.2 * dpr, 4.2 * dpr);
+    ctx.closePath();
     ctx.fill();
+    ctx.restore();
 
     ctx.restore();
   }
@@ -781,42 +993,44 @@ export class MapAndMediaEngine {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    // 基準平均線 (150 Wh/km)
-    const minVal = -60;
-    const maxVal = 320;
+    const minVal = -50;
+    const maxVal = 290;
     const valToY = (v) => {
       const norm = (v - minVal) / (maxVal - minVal);
-      return h - 4 - Math.max(0, Math.min(1, norm)) * (h - 8);
+      return h - 4 - Math.max(0.04, Math.min(0.96, norm)) * (h - 8);
     };
 
-    const zeroY = valToY(148);
-    ctx.strokeStyle = isNight ? 'rgba(255,255,255,0.14)' : 'rgba(15,23,42,0.16)';
+    // 148 Wh/km 基準虛線
+    const refY = valToY(148);
+    ctx.strokeStyle = isNight ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.18)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    ctx.moveTo(0, zeroY);
-    ctx.lineTo(w, zeroY);
+    ctx.moveTo(0, refY);
+    ctx.lineTo(w, refY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // 繪製平滑能耗面積與曲線
+    // 平滑貝茲曲線與漸層面積填充
     const stepX = w / (hist.length - 1);
-    const isRegen = hist[hist.length - 1] < 60;
-    const strokeCol = isRegen ? '#22c55e' : '#94a3b8';
+    const pts = hist.map((v, i) => ({ x: i * stepX, y: valToY(v) }));
+    const isRegen = hist[hist.length - 1] < 50;
+    const strokeCol = isRegen ? '#22c55e' : '#38bdf8';
 
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, isRegen ? 'rgba(34, 197, 94, 0.28)' : 'rgba(148, 163, 184, 0.24)');
-    grad.addColorStop(1, 'rgba(15, 23, 42, 0.0)');
+    grad.addColorStop(0, isRegen ? 'rgba(34, 197, 94, 0.36)' : 'rgba(56, 189, 248, 0.34)');
+    grad.addColorStop(1, 'rgba(15, 23, 42, 0.02)');
 
     ctx.beginPath();
-    hist.forEach((v, i) => {
-      const x = i * stepX;
-      const y = valToY(v);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const xc = (pts[i].x + pts[i + 1].x) * 0.5;
+      const yc = (pts[i].y + pts[i + 1].y) * 0.5;
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, xc, yc);
+    }
+    ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
     ctx.strokeStyle = strokeCol;
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 2.0;
     ctx.stroke();
 
     ctx.lineTo(w, h);
@@ -985,19 +1199,17 @@ export class MapAndMediaEngine {
     const canvas = this.mediaCanvas;
     if (!canvas || !canvas.isConnected) return;
     const rect = canvas.getBoundingClientRect();
-    if (rect.width < 10 || rect.height < 10) return;
-
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cw = Math.max(10, Math.round(rect.width * dpr));
-    const ch = Math.max(10, Math.round(rect.height * dpr));
+    const w = rect.width > 20 ? rect.width : 480;
+    const h = rect.height > 20 ? rect.height : 280;
+    const cw = Math.max(240, Math.round(w * dpr));
+    const ch = Math.max(150, Math.round(h * dpr));
     if (canvas.width !== cw || canvas.height !== ch) {
       canvas.width = cw;
       canvas.height = ch;
     }
 
     const ctx = this.mediaCtx;
-    const w = rect.width;
-    const h = rect.height;
     const s = this.store.getState();
     const tab = s.media.activeTab;
 
@@ -1172,7 +1384,12 @@ export class MapAndMediaEngine {
     ctx.textAlign = 'left';
     ctx.font = w < 230 ? '500 9.5px Inter, -apple-system, sans-serif' : '500 11px Inter, -apple-system, sans-serif';
     ctx.fillStyle = isNight ? '#cbd5e1' : '#334155';
-    ctx.fillText(currentLyric, rightStart, h * 0.84);
+    let displayLyric = currentLyric;
+    while (displayLyric.length > 4 && ctx.measureText(displayLyric + '…').width > usableW - 6) {
+      displayLyric = displayLyric.slice(0, -1);
+    }
+    if (displayLyric !== currentLyric) displayLyric += '…';
+    ctx.fillText(displayLyric, rightStart, h * 0.84);
     ctx.restore();
   }
 
@@ -1367,10 +1584,10 @@ export class MapAndMediaEngine {
     ctx.fillRect(0, 0, w, topBarH);
     ctx.fillRect(0, viewBot, w, botBarH);
 
-    ctx.font = '600 10px "JetBrains Mono", monospace';
+    ctx.font = '600 10px Inter, -apple-system, sans-serif';
     ctx.fillStyle = '#cbd5e1';
     ctx.textAlign = 'left';
-    ctx.fillText(`${vid.resolution}`, 10, topBarH * 0.68);
+    ctx.fillText(`${vid.category || '劇院短片'}`, 10, topBarH * 0.68);
 
     const totalSec = Math.round(((s.media.videoProgress || 42) / 100) * (vid.duration || 312));
     const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
@@ -1392,15 +1609,42 @@ export class MapAndMediaEngine {
 
   renderArcadeGameCanvas(ctx, w, h, now, dt, s) {
     const game = s.media.game;
+    const stageIdx = game.stageIndex || 0;
+    const stage = (game.stages && game.stages[stageIdx]) || {
+      code: '一區',
+      name: '都心環狀線 · 夜間巡航',
+      speedKmh: 246,
+      sky: '#090d16',
+      road: '#181e29',
+      accent: '#3e6ae1'
+    };
 
-    ctx.fillStyle = '#0d1017';
+    // 碰撞紅閃或拾取綠閃衰減
+    if (game.collisionFlash > 0) game.collisionFlash = Math.max(0, game.collisionFlash - dt * 2.6);
+    if (game.pickupFlash > 0) game.pickupFlash = Math.max(0, game.pickupFlash - dt * 2.6);
+
+    ctx.save();
+    if (game.collisionFlash > 0.1) {
+      ctx.translate(Math.sin(now * 0.08) * 4 * game.collisionFlash, 0);
+    }
+
+    ctx.fillStyle = stage.sky || '#0d1017';
     ctx.fillRect(0, 0, w, h);
 
     const horizonY = h * 0.34;
     const roadTopW = w * 0.18;
     const roadBotW = w * 0.78;
 
-    ctx.fillStyle = '#181e29';
+    const glow = ctx.createRadialGradient(w * 0.5, horizonY, 4, w * 0.5, horizonY, w * 0.45);
+    glow.addColorStop(0, stage.accent || '#3e6ae1');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, horizonY);
+    ctx.restore();
+
+    ctx.fillStyle = stage.road || '#181e29';
     ctx.beginPath();
     ctx.moveTo(w / 2 - roadTopW / 2, horizonY);
     ctx.lineTo(w / 2 + roadTopW / 2, horizonY);
@@ -1409,16 +1653,51 @@ export class MapAndMediaEngine {
     ctx.closePath();
     ctx.fill();
 
-    const gameSpeed = game.running ? (game.boostActive ? 0.68 : 0.38) : 0.0;
+    // 真實可玩：速度隨無碰撞時間漸進遞增 (160 -> 320 km/h)，開啟氮氣加速額外 +45 km/h
+    const maxStageKmh = (stage.speedKmh || 246) + (game.boostActive ? 45 : 20);
     if (game.running) {
+      if (!game.currentSpeedKmh) game.currentSpeedKmh = 180;
+      game.currentSpeedKmh = Math.min(maxStageKmh, game.currentSpeedKmh + dt * (game.boostActive ? 28 : 14));
+      const speedNorm = game.currentSpeedKmh / 240;
+      const gameSpeed = (game.boostActive ? 0.64 : 0.42) * speedNorm;
       this.gameScroll = (this.gameScroll + gameSpeed * dt * 2.4) % 1.0;
-      game.score += Math.round(dt * (game.boostActive ? 160 : 85));
+      game.score += Math.round(dt * (game.boostActive ? 165 : 90) * speedNorm);
       if (game.score > game.highScore) game.highScore = game.score;
+
+      for (const obs of this.obstacles) {
+        obs.z += gameSpeed * dt;
+        if (obs.z > 1.02) {
+          obs.z = 0.04;
+          obs.lane = Math.floor(Math.random() * 3);
+          obs.type = Math.random() > 0.38 ? 'car' : 'battery';
+        }
+        // 碰撞與能量拾取判定
+        if (obs.z > 0.78 && obs.z < 0.94 && obs.lane === game.playerLane) {
+          if (obs.type === 'battery') {
+            game.score += 300;
+            if (game.score > game.highScore) game.highScore = game.score;
+            game.combo = (game.combo || 1) + 1;
+            game.currentSpeedKmh = Math.min(340, game.currentSpeedKmh + 16);
+            game.pickupFlash = 1.0;
+            game.lastEvent = `電能補給 +300 · 連擊 ×${game.combo}`;
+            obs.z = 0.03;
+            obs.lane = (obs.lane + 1) % 3;
+          } else {
+            game.score = Math.max(0, game.score - 150);
+            game.combo = 0;
+            game.currentSpeedKmh = Math.max(140, game.currentSpeedKmh * 0.68);
+            game.collisionFlash = 1.0;
+            game.lastEvent = '碰撞前車 -150 · 車速下降';
+            obs.z = 0.03;
+            obs.lane = (obs.lane + 2) % 3;
+          }
+        }
+      }
     }
 
     for (const ratio of [-0.5, -0.166, 0.166, 0.5]) {
-      ctx.strokeStyle = Math.abs(ratio) === 0.5 ? '#3e6ae1' : 'rgba(243, 244, 246, 0.30)';
-      ctx.lineWidth = Math.abs(ratio) === 0.5 ? 1.8 : 1.2;
+      ctx.strokeStyle = Math.abs(ratio) === 0.5 ? (stage.accent || '#3e6ae1') : 'rgba(243, 244, 246, 0.30)';
+      ctx.lineWidth = Math.abs(ratio) === 0.5 ? 2.0 : 1.2;
       ctx.beginPath();
       ctx.moveTo(w / 2 + roadTopW * ratio, horizonY);
       ctx.lineTo(w / 2 + roadBotW * ratio, h);
@@ -1426,26 +1705,6 @@ export class MapAndMediaEngine {
     }
 
     for (const obs of this.obstacles) {
-      if (game.running) {
-        obs.z += gameSpeed * dt;
-        if (obs.z > 1.02) {
-          obs.z = 0.04;
-          obs.lane = Math.floor(Math.random() * 3);
-          obs.type = Math.random() > 0.35 ? 'car' : 'battery';
-        }
-        if (obs.z > 0.78 && obs.z < 0.94 && obs.lane === game.playerLane) {
-          if (obs.type === 'battery') {
-            game.score += 300;
-            obs.z = 0.03;
-            obs.lane = (obs.lane + 1) % 3;
-          } else {
-            game.score = Math.max(0, game.score - 100);
-            obs.z = 0.03;
-            obs.lane = (obs.lane + 2) % 3;
-          }
-        }
-      }
-
       const scale = 0.22 + obs.z * 0.78;
       const laneOffset = (obs.lane - 1) * 0.33;
       const currRoadW = roadTopW + (roadBotW - roadTopW) * obs.z;
@@ -1456,14 +1715,17 @@ export class MapAndMediaEngine {
       ctx.translate(ox, oy);
       ctx.scale(scale, scale);
       if (obs.type === 'battery') {
-        ctx.fillStyle = '#3e6ae1';
+        ctx.fillStyle = '#38bdf8';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(0, -10, 10, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
       } else {
-        ctx.fillStyle = '#283244';
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 1.1;
+        ctx.fillStyle = '#334155';
+        ctx.strokeStyle = '#f87171';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.roundRect(-20, -16, 40, 14, 4);
         ctx.fill();
@@ -1476,36 +1738,362 @@ export class MapAndMediaEngine {
     const playerY = h - 10;
     ctx.save();
     ctx.translate(playerX, playerY);
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = game.collisionFlash > 0.2 ? '#fca5a5' : '#e2e8f0';
     ctx.beginPath();
     ctx.roundRect(-26, -18, 52, 15, 5);
     ctx.fill();
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(-22, -15, 44, 3);
+    if (game.boostActive) {
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-14, -2, 8, 8);
+      ctx.fillRect(6, -2, 8, 8);
+    }
     ctx.restore();
 
-    ctx.fillStyle = 'rgba(13, 17, 25, 0.82)';
-    ctx.beginPath();
-    ctx.roundRect(10, 8, 190, 22, 5);
-    ctx.fill();
-    ctx.font = '600 11px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#f8fafc';
+    if (game.collisionFlash > 0.05) {
+      ctx.fillStyle = `rgba(239, 68, 68, ${(game.collisionFlash * 0.28).toFixed(2)})`;
+      ctx.fillRect(0, 0, w, h);
+    } else if (game.pickupFlash > 0.05) {
+      ctx.fillStyle = `rgba(56, 189, 248, ${(game.pickupFlash * 0.22).toFixed(2)})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // 頂部全寬計分與速度儀錶列（絕不被任何標籤遮擋）
+    const dispKmh = game.running ? Math.round(game.currentSpeedKmh || 218) : 0;
+    ctx.fillStyle = 'rgba(10, 14, 22, 0.86)';
+    ctx.fillRect(0, 0, w, 28);
+    ctx.font = '600 10.5px "JetBrains Mono", Inter, sans-serif';
+    ctx.fillStyle = '#93c5fd';
     ctx.textAlign = 'left';
-    ctx.fillText(`SCORE ${game.score} · HI ${game.highScore}`, 18, 23);
+    ctx.fillText(`${stage.code} · ${game.lastEvent || '左右變道閃避前車 · 拾取藍球加分'}`, 10, 18);
+    ctx.fillStyle = '#f8fafc';
+    ctx.textAlign = 'right';
+    ctx.fillText(`時速 ${dispKmh} km/h · 得分 ${game.score} · 最高 ${game.highScore}`, w - 10, 18);
+
+    ctx.restore();
   }
 
+  /**
+   * 全屏空調頁：繪製車內俯視輪廓、出風口、動態風向氣流波紋與前後排座椅加熱狀態
+   */
+  renderClimateCabinCanvas(now) {
+    const canvas = document.getElementById('canvas-climate-cabin');
+    if (!canvas || !canvas.isConnected) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = Math.round(rect.width * dpr);
+    const ch = Math.round(rect.height * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
+
+    if (canvas.dataset.climBound !== 'true') {
+      canvas.dataset.climBound = 'true';
+      canvas.style.cursor = 'pointer';
+      canvas.addEventListener('click', (e) => {
+        const r = canvas.getBoundingClientRect();
+        const rx = (e.clientX - r.left) / Math.max(1, r.width);
+        const ry = (e.clientY - r.top) / Math.max(1, r.height);
+        if (ry > 0.32 && ry < 0.72) {
+          if (rx < 0.48) {
+            this.store.update((st) => { st.climate.seatHeatLeft = (st.climate.seatHeatLeft + 1) % 4; });
+          } else if (rx > 0.52) {
+            this.store.update((st) => { st.climate.seatHeatRight = (st.climate.seatHeatRight + 1) % 4; });
+          }
+        } else {
+          const dirs = ['face', 'face-feet', 'feet', 'windshield'];
+          this.store.update((st) => {
+            const cur = st.climate.ventDir || 'face-feet';
+            st.climate.ventDir = dirs[(dirs.indexOf(cur) + 1) % dirs.length];
+            st.climate.power = true;
+          });
+        }
+      });
+    }
+
+    const ctx = canvas.getContext('2d');
+    const w = rect.width;
+    const h = rect.height;
+    const s = this.store.getState();
+    const isNight = s.environment.timeOfDay === 'night';
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = isNight ? '#0d121a' : '#e2e8f0';
+    ctx.fillRect(0, 0, w, h);
+
+    const cx = w * 0.5;
+    const carW = Math.min(w * 0.68, h * 1.15);
+    const carH = h * 0.88;
+    const topY = (h - carH) * 0.5;
+
+    // 1. 車身俯視輪廓與前擋風玻璃
+    ctx.fillStyle = isNight ? '#161e2b' : '#f8fafc';
+    ctx.strokeStyle = isNight ? 'rgba(148, 163, 184, 0.35)' : 'rgba(71, 85, 105, 0.40)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(cx - carW * 0.5, topY, carW, carH, 28);
+    ctx.fill();
+    ctx.stroke();
+
+    // 擋風玻璃與橫貫式儀錶台出風槽
+    ctx.fillStyle = isNight ? '#1e293b' : '#cbd5e1';
+    ctx.beginPath();
+    ctx.roundRect(cx - carW * 0.44, topY + 12, carW * 0.88, carH * 0.16, 12);
+    ctx.fill();
+
+    const ventY = topY + carH * 0.22;
+    ctx.strokeStyle = s.climate.power ? '#38bdf8' : '#64748b';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx - carW * 0.40, ventY);
+    ctx.lineTo(cx + carW * 0.40, ventY);
+    ctx.stroke();
+
+    // 2. 主駕、副駕與後排座椅俯視輪廓 + 座椅加熱等級顯示
+    const drawSeat = (sx, sy, sw, sh, label, heatLv) => {
+      ctx.fillStyle = heatLv > 0
+        ? `rgba(239, 68, 68, ${0.18 + heatLv * 0.12})`
+        : (isNight ? '#1f2937' : '#e2e8f0');
+      ctx.strokeStyle = heatLv > 0 ? '#ef4444' : (isNight ? '#475569' : '#94a3b8');
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.roundRect(sx - sw / 2, sy, sw, sh, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = isNight ? '#f8fafc' : '#0f172a';
+      ctx.font = '600 11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, sx, sy + sh * 0.46);
+      ctx.fillStyle = heatLv > 0 ? '#fca5a5' : (isNight ? '#94a3b8' : '#64748b');
+      ctx.font = '600 10px Inter, sans-serif';
+      ctx.fillText(heatLv > 0 ? `加熱 ${heatLv} 檔` : '未加熱', sx, sy + sh * 0.74);
+    };
+
+    const seatW = carW * 0.34;
+    const seatH = carH * 0.28;
+    const frontSeatY = topY + carH * 0.33;
+    drawSeat(cx - carW * 0.23, frontSeatY, seatW, seatH, '主駕座椅', s.climate.seatHeatLeft);
+    drawSeat(cx + carW * 0.23, frontSeatY, seatW, seatH, '副駕座椅', s.climate.seatHeatRight);
+    drawSeat(cx, topY + carH * 0.67, carW * 0.78, carH * 0.22, '後排環抱座椅', s.climate.seatHeatRear || 0);
+
+    // 3. 動態出風口氣流波紋 (隨風量等級 1-10、溫度冷暖與風向實時流動)
+    if (s.climate.power) {
+      const speed = 0.8 + (s.climate.fanSpeed || 5) * 0.22;
+      const phase = (now * 0.0022 * speed) % 1;
+      const ventDir = s.climate.ventDir || 'face-feet';
+      const spreadX = ventDir === 'face' ? 0.0 : (ventDir === 'feet' ? 0.14 : -0.06);
+
+      const drawAirStream = (originX, tempC) => {
+        const isWarm = tempC >= 23.0;
+        const col = isWarm ? 'rgba(251, 146, 60, 0.72)' : 'rgba(56, 189, 248, 0.75)';
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2.4;
+        for (let ray = -1; ray <= 1; ray++) {
+          ctx.beginPath();
+          for (let step = 0; step <= 24; step++) {
+            const p = step / 24;
+            const py = ventY + 4 + p * (carH * 0.42);
+            const wave = Math.sin((p - phase) * Math.PI * 4) * 6;
+            const px = originX + ray * 18 + p * ray * (carW * spreadX) + wave;
+            if (step === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+      };
+
+      drawAirStream(cx - carW * 0.23, s.climate.driverTemp);
+      drawAirStream(cx + carW * 0.23, s.climate.passengerTemp);
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * 全屏充電頁：繪製高壓快充功率曲線 (kW vs 電量 %)
+   */
+  renderChargingCurveCanvas(now) {
+    const canvas = document.getElementById('canvas-charging-curve');
+    if (!canvas || !canvas.isConnected) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = Math.round(rect.width * dpr);
+    const ch = Math.round(rect.height * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const w = rect.width;
+    const h = rect.height;
+    const s = this.store.getState();
+    const isNight = s.environment.timeOfDay === 'night';
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const padL = 34;
+    const padR = 14;
+    const padT = 16;
+    const padB = 22;
+    const gw = w - padL - padR;
+    const gh = h - padT - padB;
+
+    // 網格線
+    ctx.strokeStyle = isNight ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.10)';
+    ctx.lineWidth = 1;
+    [0, 0.5, 1].forEach((r) => {
+      const gy = padT + gh * r;
+      ctx.beginPath();
+      ctx.moveTo(padL, gy);
+      ctx.lineTo(padL + gw, gy);
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = isNight ? '#94a3b8' : '#475569';
+    ctx.font = '600 9.5px "JetBrains Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('250kW', padL - 4, padT + 8);
+    ctx.fillText('125kW', padL - 4, padT + gh * 0.5 + 4);
+    ctx.fillText('0kW', padL - 4, padT + gh);
+
+    const curve = s.charging.powerCurve || [75, 165, 242, 250, 248, 215, 172, 128, 86, 48, 22];
+    const pts = curve.map((kw, idx) => ({
+      x: padL + (idx / (curve.length - 1)) * gw,
+      y: padT + gh - (kw / 260) * gh
+    }));
+
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + gh);
+    grad.addColorStop(0, 'rgba(34, 197, 94, 0.38)');
+    grad.addColorStop(1, 'rgba(34, 197, 94, 0.02)');
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const xc = (pts[i].x + pts[i + 1].x) * 0.5;
+      const yc = (pts[i].y + pts[i + 1].y) * 0.5;
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, xc, yc);
+    }
+    ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    ctx.lineTo(padL + gw, padT + gh);
+    ctx.lineTo(padL, padT + gh);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 當前 SOC 位置標記與上限線
+    const socX = padL + (Math.min(100, Math.max(0, s.displaySoc)) / 100) * gw;
+    const limX = padL + (s.charging.limitSoc / 100) * gw;
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(limX, padT);
+    ctx.lineTo(limX, padT + gh);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(socX, padT + gh * 0.42, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = isNight ? '#cbd5e1' : '#1e293b';
+    ctx.fillText(`當前 ${Math.round(s.displaySoc)}%`, socX, h - 5);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(`上限 ${s.charging.limitSoc}%`, limX, h - 5);
+
+    ctx.restore();
+  }
+
+  /**
+   * 全屏語音頁：繪製聆聽 / 識別 / 執行三種狀態的實時多頻聲波動畫
+   */
+  renderVoiceWaveCanvas(now) {
+    const canvas = document.getElementById('canvas-voice-wave');
+    if (!canvas || !canvas.isConnected) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = Math.round(rect.width * dpr);
+    const ch = Math.round(rect.height * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const w = rect.width;
+    const h = rect.height;
+    const s = this.store.getState();
+    const phase = s.voice.phase || 'listening';
+    const isNight = s.environment.timeOfDay === 'night';
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = isNight ? '#0b1018' : '#e2e8f0';
+    ctx.fillRect(0, 0, w, h);
+
+    const midY = h * 0.5;
+    const colors = phase === 'recognizing'
+      ? ['#818cf8', '#c084fc', '#38bdf8']
+      : (phase === 'executed' ? ['#22c55e', '#34d399', '#38bdf8'] : ['#38bdf8', '#3e6ae1', '#60a5fa']);
+    const freqMult = phase === 'recognizing' ? 2.1 : (phase === 'executed' ? 0.8 : 1.35);
+    const ampMult = phase === 'executed' ? 0.45 : 0.82;
+
+    colors.forEach((col, bIdx) => {
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2.4 - bIdx * 0.4;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 6) {
+        const normX = x / w;
+        const env = Math.sin(normX * Math.PI);
+        const y = midY + Math.sin(normX * Math.PI * (6 + bIdx * 2) - now * 0.006 * freqMult + bIdx) * (h * 0.34 * ampMult) * env;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    });
+
+    ctx.restore();
+  }
+
+  /**
+   * 启动地图与多媒体画面的高帧率渲染循环
+   */
   startLoop() {
     let last = performance.now();
     const tick = (now) => {
       const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
       this.renderNavigationMap(now, dt);
-      this.renderPassengerEntertainment(now, dt);
       this.renderMobileLocationMap();
       this.renderClusterEnergyGraph();
       this.renderCamera360View(now);
+      this.renderPassengerEntertainment(now, dt);
+      if (typeof this.renderClimateCabinCanvas === 'function') this.renderClimateCabinCanvas(now);
+      if (typeof this.renderChargingCurveCanvas === 'function') this.renderChargingCurveCanvas(now);
+      if (typeof this.renderVoiceWaveCanvas === 'function') this.renderVoiceWaveCanvas(now);
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }
 }
+

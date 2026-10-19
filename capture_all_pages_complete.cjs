@@ -8,10 +8,8 @@ const CDP_PORT = 9278;
 
 // 截圖儲存目錄
 const LOCAL_DIR = path.join(__dirname, 'screenshots');
-const ARTIFACT_DIR = '/Users/usagi/.gemini/antigravity/brain/aac3bfcb-9c13-44b7-8635-d64d6c19ee30/screenshots';
 
 if (!fs.existsSync(LOCAL_DIR)) fs.mkdirSync(LOCAL_DIR, { recursive: true });
-if (!fs.existsSync(ARTIFACT_DIR)) fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
 
 // 1. 本地靜態文件伺服器
 const server = http.createServer((req, res) => {

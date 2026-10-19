@@ -1,5 +1,5 @@
 /**
- * TESLA MODEL S (2021+ REFRESH) COCKPIT HMI — WEBGL2 3D PBR & POST-PROCESSING ENGINE
+ * TESLA MODEL 3 COCKPIT HMI — WEBGL2 3D PBR & POST-PROCESSING ENGINE
  * 質感與真實度大改重點：
  * 1. 對標車型升級為 Tesla Model S (2021+ Palladium 改款) 寬體低趴轎跑比例，角落標註 CC-BY 模型來源。
  * 2. 修正車頂與車窗玻璃死黑：調整全景玻璃天幕與車窗之物理材質 (Tint + Clearcoat + 環境反射)，搭配漸層柔光頂棚，呈現通透真實玻璃質感，同時確保手機 App 內車燈柔和不過曝。
@@ -17,11 +17,11 @@ import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 export const PAINT_PRESETS = {
-  quicksilver: { name: '快銀色 Quicksilver', color: 0x8f97a3, emissive: 0x030406, metalness: 0.74, roughness: 0.26, clearcoat: 0.78, clearcoatRoughness: 0.16 },
-  stealthgrey: { name: '星空灰 Stealth Grey', color: 0x363b44, emissive: 0x020304, metalness: 0.70, roughness: 0.28, clearcoat: 0.75, clearcoatRoughness: 0.18 },
-  pearlwhite: { name: '珍珠白 Pearl White', color: 0xdfe3eb, emissive: 0x050608, metalness: 0.38, roughness: 0.25, clearcoat: 0.80, clearcoatRoughness: 0.16 },
-  ultrared: { name: '烈焰紅 Ultra Red', color: 0x921720, emissive: 0x070102, metalness: 0.68, roughness: 0.26, clearcoat: 0.82, clearcoatRoughness: 0.16 },
-  deepblue: { name: '深海藍 Deep Blue', color: 0x1a3563, emissive: 0x02050c, metalness: 0.68, roughness: 0.27, clearcoat: 0.80, clearcoatRoughness: 0.16 }
+  quicksilver: { name: '流銀金屬漆', color: 0x8f97a3, emissive: 0x030406, metalness: 0.74, roughness: 0.26, clearcoat: 0.78, clearcoatRoughness: 0.16 },
+  stealthgrey: { name: '星空灰車漆', color: 0x363b44, emissive: 0x020304, metalness: 0.70, roughness: 0.28, clearcoat: 0.75, clearcoatRoughness: 0.18 },
+  pearlwhite: { name: '珍珠白車漆', color: 0xdfe3eb, emissive: 0x050608, metalness: 0.38, roughness: 0.25, clearcoat: 0.80, clearcoatRoughness: 0.16 },
+  ultrared: { name: '烈焰紅車漆', color: 0x921720, emissive: 0x070102, metalness: 0.68, roughness: 0.26, clearcoat: 0.82, clearcoatRoughness: 0.16 },
+  deepblue: { name: '深海藍車漆', color: 0x1a3563, emissive: 0x02050c, metalness: 0.68, roughness: 0.27, clearcoat: 0.80, clearcoatRoughness: 0.16 }
 };
 
 export class SceneEngine {
@@ -80,8 +80,10 @@ export class SceneEngine {
       mobile: new THREE.PerspectiveCamera(30, 1.35, 0.1, 180),
       center: new THREE.PerspectiveCamera(37, 0.8, 0.1, 220),
       cluster: new THREE.PerspectiveCamera(31, 2.667, 0.1, 220),
-      hud: new THREE.PerspectiveCamera(28, 2.6, 0.1, 220),
-      windshield: new THREE.PerspectiveCamera(34, 2.2, 0.1, 220)
+      hud: new THREE.PerspectiveCamera(42, 2.6, 0.1, 220),
+      windshield: new THREE.PerspectiveCamera(45, 2.1, 0.1, 220),
+      cam360Feed: new THREE.PerspectiveCamera(68, 1.35, 0.1, 180),
+      cam360Top: new THREE.PerspectiveCamera(40, 0.85, 0.5, 60)
     };
 
     this.scene = new THREE.Scene();
@@ -726,6 +728,12 @@ export class SceneEngine {
       g.add(bracketLine);
     }
 
+    g.traverse((child) => {
+      if (child.isMesh && child.geometry && child.geometry.type === 'PlaneGeometry') {
+        child.visible = false;
+      }
+    });
+    if (this.leadTargetBracket) this.leadTargetBracket.visible = false;
     return g;
   }
 
@@ -851,17 +859,17 @@ export class SceneEngine {
       envMapIntensity: 1.12
     });
 
-    // 修正玻璃死黑：賦予車頂天幕與車窗深海藍灰通透底色、清漆層與高環境反射，徹底告別死黑塊
+    // 深色染色車頂與車窗玻璃加輕微環境反射（不透出車內白色座椅輪廓）
     this.glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x2b3d54,
-      emissive: 0x0d1726,
-      metalness: 0.18,
+      color: 0x0b1018,
+      emissive: 0x04070d,
+      metalness: 0.28,
       roughness: 0.06,
-      transparent: true,
-      opacity: 0.90,
+      transparent: false,
+      opacity: 1.0,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.06,
-      envMapIntensity: 1.85
+      clearcoatRoughness: 0.04,
+      envMapIntensity: 2.10
     });
 
     this.frontClearLensMat = new THREE.MeshBasicMaterial({
@@ -1109,8 +1117,8 @@ export class SceneEngine {
 
         const maxDim = Math.max(size.x, size.y, size.z);
         const scaleFactor = 4.22 / maxDim;
-        // 調整為 2021+ Model S Palladium 寬體低趴長軸距比例 (寬 +4.5%, 高 -3.5%, 長 +5%)
-        model.scale.set(scaleFactor * 1.045, scaleFactor * 0.965, scaleFactor * 1.05);
+        // 保持 Tesla Model 3 真實車身比例
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
         model.updateMatrixWorld(true);
 
         const scaledBox = new THREE.Box3().setFromObject(model);
@@ -1385,6 +1393,37 @@ export class SceneEngine {
 
     if (viewId === 'mobile' || viewId === 'center') {
       this.bindOrbitEvents(viewId, canvasEl);
+    } else if (viewId === 'windshield' && canvasEl.dataset.cabinRayBound !== 'true') {
+      canvasEl.dataset.cabinRayBound = 'true';
+      canvasEl.addEventListener('pointermove', (e) => {
+        if (!this.raycaster || !this.screenMeshes3D) return;
+        const rect = canvasEl.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((e.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1,
+          -((e.clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1
+        );
+        this.raycaster.setFromCamera(mouse, this.cameras.windshield);
+        const hits = this.raycaster.intersectObjects(this.screenMeshes3D, false);
+        canvasEl.style.cursor = hits.length > 0 ? 'pointer' : 'default';
+      });
+      canvasEl.addEventListener('click', (e) => {
+        if (!this.raycaster || !this.screenMeshes3D) return;
+        const rect = canvasEl.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((e.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1,
+          -((e.clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1
+        );
+        this.raycaster.setFromCamera(mouse, this.cameras.windshield);
+        const hits = this.raycaster.intersectObjects(this.screenMeshes3D, false);
+        if (hits.length > 0 && hits[0].object.userData.screenTarget) {
+          const targetScreen = hits[0].object.userData.screenTarget;
+          this.store.update((st) => {
+            st.system.focusedScreen = targetScreen;
+          });
+          const names = { cluster: '8:3 駕駛儀錶盤', center: '中控觸控屏', passenger: '副駕娛樂屏' };
+          this.store.showToast(`已聚焦放大：${names[targetScreen] || targetScreen}`, 'info');
+        }
+      });
     }
   }
 
@@ -1520,7 +1559,11 @@ export class SceneEngine {
       }
     }
 
-    if (s.wipers.effectiveLevel > 0) {
+    if (s.service && s.service.wiperServiceMode) {
+      const targetAngle = 1.05;
+      if (this.carParts.wiperR) this.carParts.wiperR.rotation.z += (targetAngle - this.carParts.wiperR.rotation.z) * Math.min(1, dt * 8);
+      if (this.carParts.wiperL) this.carParts.wiperL.rotation.z += (targetAngle - this.carParts.wiperL.rotation.z) * Math.min(1, dt * 8);
+    } else if (s.wipers.effectiveLevel > 0) {
       const wiperSpeed = s.wipers.effectiveLevel * 3.5;
       this.wiperPhase += dt * wiperSpeed;
       const wAngle = Math.abs(Math.sin(this.wiperPhase)) * 1.2;
@@ -1533,6 +1576,17 @@ export class SceneEngine {
 
     if (this.carParts.steering) {
       this.carParts.steering.rotation.y = THREE.MathUtils.degToRad(s.steeringAngle);
+    }
+    if (this.steeringWheel3DGroup) {
+      this.steeringWheel3DGroup.rotation.z = -THREE.MathUtils.degToRad(s.steeringAngle);
+    }
+    if (this.center3DPivot) {
+      const tilt = s.environment.centerTilt || 'driver';
+      const targetTiltY = tilt === 'driver' ? Math.PI + 0.16 : (tilt === 'passenger' ? Math.PI - 0.16 : Math.PI);
+      this.center3DPivot.rotation.y += (targetTiltY - this.center3DPivot.rotation.y) * Math.min(1, dt * 8.0);
+    }
+    if (this.cabinAmbientStripMat) {
+      this.cabinAmbientStripMat.color.setHex(s.lights.ambient ? 0x3b82f6 : 0x1e2430);
     }
 
     const speedMps = (s.displaySpeed / 3.6) * (s.gear === 'R' ? -1 : 1);
@@ -1703,9 +1757,7 @@ export class SceneEngine {
         ? 0xef4444
         : (distM < 26 ? 0xf59e0b : 0x22c55e);
 
-      if (this.leadTargetBracketMat) {
-        this.leadTargetBracketMat.color.setHex(bandColor);
-      }
+      if (this.leadTargetBracket) this.leadTargetBracket.visible = false;
       if (this.followDistanceBand && this.followThresholdBar) {
         const startZ = 4.2;
         const endZ = leadZ - 2.3;
@@ -1784,10 +1836,9 @@ export class SceneEngine {
     this.cameras.hud.position.set(0, 1.48, 1.85);
     this.cameras.hud.lookAt(s.roadCurvature * 1.2, 0.72, 24.0);
 
-    const yawOff = (this.cockpitYaw || 0) * 0.04;
-    const pitchOff = (this.cockpitPitch || 0) * 0.03;
-    this.cameras.windshield.position.set(0.22 - yawOff * 0.30, 1.54 - pitchOff * 0.14, 0.45);
-    this.cameras.windshield.lookAt(s.roadCurvature * 0.9 - yawOff * 1.4, 0.76 + pitchOff * 1.0, 28.0);
+    // 單一 Three.js 3D 座艙總覽相機：退後至車廂中央視點，同時完整納入擋風玻璃外 3D 道路、A柱、車門內飾、方向盤、座椅與三塊貼圖屏幕
+    this.cameras.windshield.position.set(0.04, 1.24, -0.52);
+    this.cameras.windshield.lookAt(s.roadCurvature * 0.35, 0.96, 3.80);
   }
 
   startRenderLoop() {
@@ -1810,6 +1861,11 @@ export class SceneEngine {
 
       const focused = this.store.state.system.focusedScreen;
       const isNight = this.store.state.environment.timeOfDay === 'night';
+
+      if (focused === 'overview' && typeof this.updateCockpitScreenTextures === 'function') {
+        this.updateCockpitScreenTextures(now);
+      }
+      this.renderReal3DCamera360(isNight);
 
       for (const [viewId, entry] of this.canvases.entries()) {
         const { canvas, ctx } = entry;
@@ -1853,8 +1909,8 @@ export class SceneEngine {
         }
         if (this.followDistanceBand && this.followThresholdBar) {
           const showBand = false;
-          this.followDistanceBand.visible = showBand;
-          this.followThresholdBar.visible = showBand;
+          this.followDistanceBand.visible = false;
+          this.followThresholdBar.visible = false;
         }
 
         const prevBgHex = this.scene.background.getHex();
@@ -1902,5 +1958,171 @@ export class SceneEngine {
     };
 
     requestAnimationFrame(renderFrame);
+  }
+
+  /**
+   * 360° 環視相機：使用實際 3D 車身與 3D 道路從前、後、左葉子板、右葉子板四個虛擬機位渲染畫面，右側為真實 3D 車身俯視頂視圖加障礙物距離（無 2D 線稿）
+   */
+  renderReal3DCamera360(isNight) {
+    const canvas = document.getElementById('canvas-center-360');
+    if (!canvas || !canvas.isConnected) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.min(1120, Math.round(rect.width * dpr));
+    const h = Math.min(680, Math.round(rect.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const s = this.store.getState();
+    const activeView = s.camera360?.activeView || 'surround';
+    const leftW = Math.round(w * 0.62);
+    const rightW = w - leftW;
+
+    // 暫時隱藏 3D 內裝組件，確保外部車身與道路乾淨呈現
+    if (this.cockpitInteriorGroup) this.cockpitInteriorGroup.visible = false;
+    if (this.egoCarGroup) this.egoCarGroup.visible = true;
+    if (this.roadGroup) this.roadGroup.visible = true;
+    if (this.trafficGroup) this.trafficGroup.visible = true;
+
+    // 1. 左側 62%：從實際 3D 車身的四個虛擬機位渲染實景畫面
+    const feedCam = this.cameras.cam360Feed;
+    feedCam.aspect = leftW / Math.max(1, h);
+    if (activeView === 'rear') {
+      feedCam.position.set(0, 0.96, -2.02);
+      feedCam.lookAt(s.roadCurvature * -1.2, 0.42, -18.0);
+    } else if (activeView === 'fenderL') {
+      feedCam.position.set(0.96, 0.84, 0.65);
+      feedCam.lookAt(1.35, 0.45, -14.0);
+    } else if (activeView === 'fenderR') {
+      feedCam.position.set(-0.96, 0.84, 0.65);
+      feedCam.lookAt(-1.35, 0.45, -14.0);
+    } else {
+      // front or surround: 前保險桿上方廣角機位（可見車頭前緣與前方 3D 車道及前車）
+      feedCam.position.set(0, 0.88, 1.65);
+      feedCam.lookAt(s.roadCurvature * 1.4, 0.55, 22.0);
+    }
+    feedCam.updateProjectionMatrix();
+
+    this.renderPass.camera = feedCam;
+    this.composer.render();
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(this.offscreenCanvas, 0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height, 0, 0, leftW, h);
+
+    // 繪製 3D 倒車/車道輔助軌跡線與距離刻度 (0.5m / 1.5m / 3.0m)
+    const curveShift = s.steeringAngle * 1.6;
+    const distColors = ['#ef4444', '#f59e0b', '#22c55e'];
+    const distLabels = ['0.5m', '1.5m', '3.0m'];
+    ctx.save();
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(leftW * 0.18, h * 0.94);
+    ctx.quadraticCurveTo(leftW * 0.30 + curveShift * 0.4, h * 0.72, leftW * 0.38 + curveShift, h * 0.54);
+    ctx.moveTo(leftW * 0.82, h * 0.94);
+    ctx.quadraticCurveTo(leftW * 0.70 + curveShift * 0.4, h * 0.72, leftW * 0.62 + curveShift, h * 0.54);
+    ctx.stroke();
+
+    [0.86, 0.70, 0.56].forEach((ratio, idx) => {
+      const ly = h * ratio;
+      const halfSpan = leftW * (0.12 + (ratio - 0.5) * 0.52);
+      ctx.strokeStyle = distColors[idx];
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(leftW * 0.5 - halfSpan + curveShift * (1 - ratio), ly);
+      ctx.lineTo(leftW * 0.5 + halfSpan + curveShift * (1 - ratio), ly);
+      ctx.stroke();
+      ctx.fillStyle = distColors[idx];
+      ctx.font = `700 ${Math.round(11 * dpr)}px "JetBrains Mono", monospace`;
+      ctx.fillText(distLabels[idx], leftW * 0.5 + halfSpan + 6, ly + 4);
+    });
+    ctx.restore();
+
+    const viewNames = {
+      surround: '前視廣角 · 3D 實景機位',
+      front: '前視主相機 · 3D 遠距機位',
+      rear: '後視超廣角 · 3D 倒車機位',
+      fenderL: '左葉子板 · 3D 盲區機位',
+      fenderR: '右葉子板 · 3D 盲區機位'
+    };
+    ctx.fillStyle = 'rgba(10, 14, 22, 0.82)';
+    ctx.beginPath();
+    ctx.roundRect(14 * dpr, 14 * dpr, 210 * dpr, 28 * dpr, 7 * dpr);
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = `600 ${Math.round(12 * dpr)}px Inter, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(viewNames[activeView] || viewNames.surround, 24 * dpr, 32 * dpr);
+
+    // 2. 右側 38%：使用正上方 3D 俯視相機渲染真實 3D 車身俯視圖 + 障礙物距離包絡環
+    const topCam = this.cameras.cam360Top;
+    topCam.aspect = rightW / Math.max(1, h);
+    topCam.position.set(0, 6.6, 0.0);
+    topCam.up.set(0, 0, 1);
+    topCam.lookAt(0, 0, 0);
+    topCam.updateProjectionMatrix();
+
+    this.renderPass.camera = topCam;
+    this.composer.render();
+    ctx.drawImage(this.offscreenCanvas, 0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height, leftW, 0, rightW, h);
+
+    // 分隔線與 3D 俯視障礙物測距波紋
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath();
+    ctx.moveTo(leftW, 0);
+    ctx.lineTo(leftW, h);
+    ctx.stroke();
+
+    const cx = leftW + rightW * 0.5;
+    const cy = h * 0.50;
+    const rx = rightW * 0.34;
+    const ry = h * 0.36;
+
+    // 前後左右超聲波/視覺測距扇弧
+    ctx.save();
+    ctx.lineWidth = 3.0 * dpr;
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.80)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, -Math.PI * 0.78, -Math.PI * 0.22);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.85)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx * 0.82, ry * 0.82, 0, Math.PI * 0.22, Math.PI * 0.78);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+    ctx.setLineDash([6 * dpr, 4 * dpr]);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx * 0.92, ry * 0.92, 0, -Math.PI * 0.18, Math.PI * 0.18);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx * 0.92, ry * 0.92, 0, Math.PI * 0.82, Math.PI * 1.18);
+    ctx.stroke();
+    ctx.restore();
+
+    // 頂部與底部障礙物距離標籤
+    ctx.fillStyle = 'rgba(10, 14, 22, 0.84)';
+    ctx.beginPath();
+    ctx.roundRect(leftW + 12 * dpr, 14 * dpr, rightW - 24 * dpr, 28 * dpr, 7 * dpr);
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = `600 ${Math.round(11.5 * dpr)}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('360° 實車俯視環景 · 障礙物測距', cx, 32 * dpr);
+
+    ctx.fillStyle = 'rgba(10, 14, 22, 0.88)';
+    ctx.beginPath();
+    ctx.roundRect(leftW + 10 * dpr, h - 42 * dpr, rightW - 20 * dpr, 30 * dpr, 7 * dpr);
+    ctx.fill();
+    ctx.fillStyle = '#86efac';
+    ctx.font = `600 ${Math.round(11 * dpr)}px "JetBrains Mono", monospace`;
+    ctx.fillText(`前 ${(s.driveMode.displayLeadDistanceM * 0.08).toFixed(1)}m · 後 1.4m · 左 0.9m · 右 1.1m`, cx, h - 23 * dpr);
   }
 }

@@ -4182,3 +4182,1586 @@ input[type="range"] {
   position: static !important;
   margin-bottom: 6px !important;
 }
+
+/* ============================================================================
+ * V32: 全分頁與全彈窗完整修復 (3D座艙總覽 + 手機6子頁 + 中控7設置&6彈窗 + 副駕3模式 + 8:3儀錶盤 + HUD)
+ * ============================================================================ */
+
+/* 1. HUD 投影內容貼合擋風玻璃下緣，不再懸在半空 */
+.hud-centered-projection {
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  padding-bottom: 4px !important;
+}
+.cockpit-shell[data-view="overview"] .unit-hud {
+  left: 12% !important;
+  width: 50% !important;
+  bottom: 6px !important;
+}
+.cockpit-shell[data-view="overview"] .hud-windshield-tag {
+  position: absolute !important;
+  top: 8px !important;
+  left: 0 !important;
+}
+
+/* 2. 中控右側地圖導航卡與工具列：確保在總覽與中控全屏下均清晰顯示 */
+.center-right-pane {
+  position: relative !important;
+  overflow: hidden !important;
+}
+.center-right-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 15 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  padding: 8px 10px !important;
+  pointer-events: none !important;
+}
+.center-right-overlay > * {
+  pointer-events: auto !important;
+}
+
+/* 3. 總覽模式下副駕右側歌單緊湊行高，確保 01~10 完整顯示不裁切 */
+.cockpit-shell[data-view="overview"] .passenger-playlist {
+  padding: 3px 4px !important;
+}
+.cockpit-shell[data-view="overview"] .playlist-items {
+  justify-content: flex-start !important;
+  gap: 1px !important;
+}
+.cockpit-shell[data-view="overview"] .playlist-row {
+  min-height: 16px !important;
+  height: 16.5px !important;
+  padding: 0 4px !important;
+}
+
+/* 4. 修復 17 吋中控全屏分頁 (data-view="center") 比例、大尺寸彈窗與字體 */
+.cockpit-shell[data-view="center"] .unit-center {
+  display: flex !important;
+  width: min(92vw, calc(min(82vh, 820px) * 1.692), 1388px) !important;
+}
+.cockpit-shell[data-view="center"] .bezel-center {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 22 / 13 !important;
+  max-height: 820px !important;
+}
+.cockpit-shell[data-view="center"] .center-tilt-pivot {
+  transform: none !important;
+}
+.cockpit-shell[data-view="center"] .center-screen-grid {
+  grid-template-rows: minmax(0, 1fr) 54px !important;
+}
+.cockpit-shell[data-view="center"] .center-left-overlay {
+  padding: 12px 14px 12px 46px !important;
+}
+.cockpit-shell[data-view="center"] .center-gear-strip {
+  left: 8px !important;
+  top: 12px !important;
+  width: 30px !important;
+  padding: 3px !important;
+  gap: 4px !important;
+}
+.cockpit-shell[data-view="center"] .gear-pill {
+  height: 28px !important;
+  min-height: 28px !important;
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="center"] .center-top-status {
+  font-size: 13px !important;
+  gap: 8px !important;
+}
+.cockpit-shell[data-view="center"] .compact-icon-btn {
+  min-height: 46px !important;
+  font-size: 12px !important;
+  gap: 4px !important;
+}
+.cockpit-shell[data-view="center"] .compact-icon-btn .icon-wrap {
+  width: 18px !important;
+  height: 18px !important;
+}
+.cockpit-shell[data-view="center"] .center-mini-media-card {
+  padding: 8px 12px !important;
+}
+.cockpit-shell[data-view="center"] .mini-track-title {
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="center"] .mini-track-artist {
+  font-size: 11.5px !important;
+}
+.cockpit-shell[data-view="center"] .mini-media-btns .ctrl-btn.icon-only {
+  width: 30px !important;
+  height: 30px !important;
+}
+.cockpit-shell[data-view="center"] .center-nav-card {
+  width: 260px !important;
+  padding: 12px 14px !important;
+  gap: 8px !important;
+}
+.cockpit-shell[data-view="center"] .nav-dest-chips {
+  display: grid !important;
+}
+.cockpit-shell[data-view="center"] .nav-turn-dist {
+  font-size: 15px !important;
+}
+.cockpit-shell[data-view="center"] .nav-turn-street {
+  font-size: 12px !important;
+  max-width: 180px !important;
+}
+.cockpit-shell[data-view="center"] .map-tool-btn {
+  min-width: 46px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+}
+.cockpit-shell[data-view="center"] .center-dock-bar {
+  padding: 0 14px !important;
+  gap: 8px !important;
+}
+.cockpit-shell[data-view="center"] .dock-btn {
+  flex-direction: row !important;
+  font-size: 12.5px !important;
+  padding: 6px 10px !important;
+  gap: 6px !important;
+  min-height: 38px !important;
+}
+.cockpit-shell[data-view="center"] .dock-btn .icon-wrap {
+  width: 17px !important;
+  height: 17px !important;
+}
+.cockpit-shell[data-view="center"] .dock-step-btn {
+  width: 28px !important;
+  height: 32px !important;
+  font-size: 14px !important;
+}
+.cockpit-shell[data-view="center"] .dock-temp-readout,
+.cockpit-shell[data-view="center"] .dock-vol-readout {
+  font-size: 13px !important;
+  padding: 2px 8px !important;
+}
+
+/* 5. 放大 17 吋中控全屏模式下的彈窗 (設置 7 分頁、360 相機、充電、空調、電話、語音、應用) */
+.cockpit-shell[data-view="center"] .center-modal-layer {
+  inset: 0 0 54px 0 !important;
+  padding: 20px !important;
+}
+.cockpit-shell[data-view="center"] .center-popover {
+  width: min(90%, 920px) !important;
+  max-width: 920px !important;
+  max-height: 90% !important;
+  border-radius: 18px !important;
+}
+.cockpit-shell[data-view="center"] .popover-header {
+  padding: 14px 20px !important;
+}
+.cockpit-shell[data-view="center"] .popover-title-group h4 {
+  font-size: 16px !important;
+}
+.cockpit-shell[data-view="center"] .popover-sub {
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="center"] .settings-popover-layout {
+  grid-template-columns: 176px 1fr !important;
+  min-height: 420px !important;
+  max-height: 560px !important;
+}
+.cockpit-shell[data-view="center"] .settings-nav {
+  padding: 12px !important;
+  gap: 6px !important;
+}
+.cockpit-shell[data-view="center"] .settings-nav-btn {
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  gap: 10px !important;
+}
+.cockpit-shell[data-view="center"] .settings-nav-btn .icon-wrap {
+  width: 17px !important;
+  height: 17px !important;
+}
+.cockpit-shell[data-view="center"] .settings-content {
+  padding: 18px 22px !important;
+  gap: 16px !important;
+}
+.cockpit-shell[data-view="center"] .settings-section h5,
+.cockpit-shell[data-view="center"] .settings-label {
+  font-size: 13px !important;
+  margin-bottom: 8px !important;
+}
+.cockpit-shell[data-view="center"] .segmented-group .ctrl-btn,
+.cockpit-shell[data-view="center"] .lights-extra-row .ctrl-btn,
+.cockpit-shell[data-view="center"] .quick-doors-grid .ctrl-btn,
+.cockpit-shell[data-view="center"] .climate-toggles-grid .ctrl-btn {
+  min-height: 40px !important;
+  font-size: 13px !important;
+  padding: 8px 14px !important;
+}
+.cockpit-shell[data-view="center"] .tpms-cell {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="center"] .cam360-canvas-wrap {
+  height: 320px !important;
+}
+.cockpit-shell[data-view="center"] .cam360-Quick-tabs .ctrl-btn {
+  min-height: 40px !important;
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="center"] .apps-grid-launcher {
+  gap: 14px !important;
+  padding: 22px !important;
+}
+.cockpit-shell[data-view="center"] .app-launcher-tile {
+  min-height: 96px !important;
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="center"] .search-modal-body,
+.cockpit-shell[data-view="center"] .charging-modal-body,
+.cockpit-shell[data-view="center"] .cam360-modal-body,
+.cockpit-shell[data-view="center"] .phone-modal-body,
+.cockpit-shell[data-view="center"] .voice-modal-body,
+.cockpit-shell[data-view="center"] .climate-popover-body {
+  padding: 18px 22px !important;
+  gap: 14px !important;
+}
+.cockpit-shell[data-view="center"] .zone-temp-val {
+  font-size: 22px !important;
+}
+.cockpit-shell[data-view="center"] .ct-name,
+.cockpit-shell[data-view="center"] .voice-user-said {
+  font-size: 14px !important;
+}
+.cockpit-shell[data-view="center"] .ct-meta,
+.cockpit-shell[data-view="center"] .rc-time,
+.cockpit-shell[data-view="center"] .voice-ai-reply {
+  font-size: 12px !important;
+}
+
+/* 6. 修復副駕娛樂屏全屏分頁 (data-view="passenger") 嚴格 16:10 比例與大字體 */
+.cockpit-shell[data-view="passenger"] .unit-passenger {
+  display: flex !important;
+  width: min(92vw, calc(min(82vh, 800px) * 1.6), 1280px) !important;
+}
+.cockpit-shell[data-view="passenger"] .bezel-passenger {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 10 !important;
+  max-height: 800px !important;
+}
+.cockpit-shell[data-view="passenger"] .passenger-topbar {
+  padding: 10px 18px !important;
+}
+.cockpit-shell[data-view="passenger"] .pass-tab {
+  min-height: 34px !important;
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="passenger"] .nav-link-pill {
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+}
+.cockpit-shell[data-view="passenger"] .passenger-stage-badge {
+  top: 10px !important;
+  left: 12px !important;
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+}
+.cockpit-shell[data-view="passenger"] .passenger-controls-layer {
+  padding: 14px 18px !important;
+}
+.cockpit-shell[data-view="passenger"] .passenger-now-playing {
+  gap: 10px !important;
+}
+.cockpit-shell[data-view="passenger"] .album-badge {
+  width: 40px !important;
+  height: 40px !important;
+}
+.cockpit-shell[data-view="passenger"] .np-title {
+  font-size: 15px !important;
+}
+.cockpit-shell[data-view="passenger"] .np-artist,
+.cockpit-shell[data-view="passenger"] .np-time {
+  font-size: 12px !important;
+}
+.cockpit-shell[data-view="passenger"] .np-transport .ctrl-btn.icon-only {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+}
+.cockpit-shell[data-view="passenger"] .eq-pill-btn {
+  min-height: 30px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+}
+.cockpit-shell[data-view="passenger"] .np-vol-wrap .ctrl-btn.icon-only {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  font-size: 14px !important;
+}
+.cockpit-shell[data-view="passenger"] .vol-readout-pill {
+  min-height: 28px !important;
+  font-size: 12px !important;
+  padding: 2px 8px !important;
+}
+.cockpit-shell[data-view="passenger"] .passenger-playlist {
+  padding: 10px 12px !important;
+}
+.cockpit-shell[data-view="passenger"] .pl-idx,
+.cockpit-shell[data-view="passenger"] .pl-dur {
+  font-size: 12px !important;
+}
+.cockpit-shell[data-view="passenger"] .pl-name {
+  font-size: 13px !important;
+}
+
+/* 7. 修復 8:3 儀錶盤全屏分頁 (data-view="cluster") 與 HUD 全屏分頁 (data-view="hud") */
+.cockpit-shell[data-view="cluster"] .cluster-centered-content {
+  padding: 16px 28px !important;
+  gap: 18px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-speed-val {
+  font-size: 72px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-speed-unit {
+  font-size: 14px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-gear-row {
+  font-size: 15px !important;
+  gap: 8px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-limit-circle {
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-ap-pill {
+  font-size: 13px !important;
+  padding: 4px 10px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-meta-row {
+  font-size: 14px !important;
+  gap: 6px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-alert-badge {
+  font-size: 13px !important;
+  padding: 5px 12px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-energy-card {
+  padding: 12px 16px !important;
+  gap: 8px !important;
+}
+.cockpit-shell[data-view="cluster"] .energy-card-head,
+.cockpit-shell[data-view="cluster"] .energy-card-foot {
+  font-size: 13px !important;
+}
+.cockpit-shell[data-view="cluster"] .cluster-energy-canvas {
+  height: 92px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-telemetry-bar {
+  padding: 14px 24px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-speed-number {
+  font-size: 76px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-speed-unit,
+.cockpit-shell[data-view="hud"] .hud-follow-pill {
+  font-size: 15px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-limit-circle {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 15px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-turn-dist {
+  font-size: 18px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-turn-street {
+  font-size: 14px !important;
+  max-width: 260px !important;
+}
+.cockpit-shell[data-view="hud"] .hud-turn-svg {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+/* ============================================================================
+ * V33: 全量 58 張日夜截圖針對性修復 (Day/Night 對比度 + 抽屜面板緊湊高度 + 2560x1440 自適應)
+ * ============================================================================ */
+
+/* 1. 解決 2560x1440 高解析度下 3D 座艙總覽上下留黑邊與手機過小問題 */
+.cockpit-shell[data-view="overview"] .screens-stage {
+  grid-template-columns: minmax(0, 1fr) clamp(256px, 15.5vw, 330px) !important;
+}
+.cockpit-shell[data-view="overview"] .cockpit-3d-cabin {
+  max-height: min(92vh, 1180px) !important;
+}
+.cockpit-shell[data-view="overview"] .unit-mobile {
+  width: 100% !important;
+  max-width: 330px !important;
+  height: min(calc(100vh - 90px), 740px) !important;
+  max-height: 740px !important;
+}
+
+/* 2. 解決聯動控制面板 (control_drawer) 下方 400px 空白與日間模式死黑問題 */
+.demo-control-sidebar {
+  top: 14px !important;
+  bottom: auto !important;
+  height: auto !important;
+  max-height: calc(100vh - 96px) !important;
+  width: 330px !important;
+}
+.demo-sidebar-inner {
+  height: auto !important;
+  max-height: calc(100vh - 96px) !important;
+}
+[data-theme="day"] .demo-sidebar-inner {
+  background: rgba(248, 250, 252, 0.96) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #0f172a !important;
+}
+[data-theme="day"] .demo-sidebar-header {
+  border-bottom-color: rgba(15, 23, 42, 0.10) !important;
+}
+[data-theme="day"] .demo-title,
+[data-theme="day"] .demo-group-title {
+  color: #0f172a !important;
+}
+[data-theme="day"] .demo-kicker,
+[data-theme="day"] .demo-label {
+  color: #475569 !important;
+}
+[data-theme="day"] .demo-group {
+  background: rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid rgba(15, 23, 42, 0.07) !important;
+}
+[data-theme="day"] .demo-chip,
+[data-theme="day"] .demo-btn {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+[data-theme="day"] .demo-chip.is-active,
+[data-theme="day"] .demo-btn.is-active {
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+[data-theme="day"] .demo-slider-wrap {
+  color: #1e293b !important;
+}
+
+/* 3. 解決設計文檔與驗收自檢彈窗 (design_doc / acceptance_checklist) 日間模式不切換問題 */
+[data-theme="day"] .doc-modal-card {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.16) !important;
+  color: #0f172a !important;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25) !important;
+}
+[data-theme="day"] .doc-modal-header {
+  border-bottom-color: rgba(15, 23, 42, 0.10) !important;
+}
+[data-theme="day"] .doc-section h3 {
+  color: #0f172a !important;
+}
+[data-theme="day"] .doc-section p,
+[data-theme="day"] .doc-kicker {
+  color: #475569 !important;
+}
+[data-theme="day"] .doc-table th,
+[data-theme="day"] .doc-table td {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #1e293b !important;
+}
+[data-theme="day"] .doc-table th {
+  background: #f1f5f9 !important;
+}
+[data-theme="day"] .checklist-item {
+  background: #f8fafc !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  color: #1e293b !important;
+}
+
+/* 4. 解決 8:3 儀錶盤與 HUD 在日間模式 (day_cluster / day_hud) 下白字對比度不足問題 */
+[data-theme="day"] .cluster-alert-badge {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #334155 !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+}
+[data-theme="day"] .cluster-ap-pill {
+  background: rgba(15, 23, 42, 0.10) !important;
+  color: #1e293b !important;
+}
+[data-theme="day"] .cluster-ap-pill.is-on {
+  background: var(--accent-primary) !important;
+  color: #ffffff !important;
+}
+[data-theme="day"] .cluster-power-track {
+  background: rgba(15, 23, 42, 0.18) !important;
+}
+[data-theme="day"] .hud-telemetry-bar {
+  background: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+.cockpit-shell[data-view="hud"] .hud-frameless-projection {
+  height: clamp(360px, 68vh, 620px) !important;
+}
+
+/* 5. 日間模式中控彈窗遮罩、副駕選中曲目對比度與手機獨立分頁 3D 視窗高度修復 */
+[data-theme="day"] .center-modal-layer {
+  background: rgba(15, 23, 42, 0.28) !important;
+}
+[data-theme="day"] .playlist-row.is-current {
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+[data-theme="day"] .playlist-row.is-current .pl-sub,
+[data-theme="day"] .playlist-row.is-current .pl-idx,
+[data-theme="day"] .playlist-row.is-current .pl-dur {
+  color: #cbd5e1 !important;
+}
+.cockpit-shell[data-view="mobile"] .mobile-3d-viewport {
+  height: 185px !important;
+  min-height: 185px !important;
+}
+
+/* === V34 INTERACTION & POINTER-EVENTS FIXES === */
+.model-loading-overlay {
+  pointer-events: none !important;
+}
+
+.center-left-overlay [data-action],
+.center-right-overlay [data-action],
+.cluster-ui-layer [data-action],
+.hud-ui-layer [data-action],
+.mobile-viewport-badges [data-action],
+.mobile-header-summary [data-action] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+button.mob-vp-pill,
+button.status-pill-btn,
+button.turn-arrow-badge,
+button.beam-badge,
+button.speed-limit-sign,
+button.cluster-turn-indicator,
+button.cluster-gear-item,
+button.cluster-limit-circle,
+button.cluster-ap-pill,
+button.cluster-alert-badge,
+button.cluster-hazard-tag,
+button.hud-turn-sig,
+button.hud-limit-circle,
+button.hud-follow-pill,
+button.hud-ldw-badge {
+  font-family: inherit;
+  outline: none;
+  user-select: none;
+  transition: transform 120ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+button.status-pill-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 2px 5px;
+  border-radius: 5px;
+}
+
+button.status-pill-btn:hover,
+button.turn-arrow-badge:hover,
+button.beam-badge:hover,
+button.cluster-gear-item:hover,
+button.cluster-turn-indicator:hover,
+button.cluster-ap-pill:hover,
+button.cluster-alert-badge:hover,
+button.hud-follow-pill:hover,
+button.hud-ldw-badge:hover,
+button.mob-vp-pill:hover {
+  filter: brightness(1.18);
+}
+
+button.mob-vp-pill:active,
+button.status-pill-btn:active,
+button.turn-arrow-badge:active,
+button.beam-badge:active,
+button.speed-limit-sign:active,
+button.cluster-gear-item:active,
+button.cluster-ap-pill:active,
+button.cluster-alert-badge:active,
+button.hud-follow-pill:active,
+button.hud-ldw-badge:active {
+  transform: scale(0.95);
+}
+
+.mobile-bottom-tabs {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+
+button.tpms-cell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  cursor: pointer !important;
+}
+
+/* ============================================================================
+   V35 UPGRADE: SINGLE THREE.JS 3D CABIN OVERVIEW, FULL-SCREEN CENTER PAGES,
+   MOBILE COMPACT SUBPAGE HEADER, AND PASSENGER/CLUSTER REFINEMENTS
+   ============================================================================ */
+
+/* 1. 座艙總覽 (data-view="overview")：單一 Three.js 場景載入 3D 內裝與三塊實時紋理 3D 屏幕網格 */
+.cockpit-shell[data-view="overview"] #cockpit-3d-cabin {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  transform: none !important;
+}
+
+.cockpit-shell[data-view="overview"] .cabin-door-trim,
+.cockpit-shell[data-view="overview"] .cabin-a-pillar,
+.cockpit-shell[data-view="overview"] .cockpit-foreground-seats,
+.cockpit-shell[data-view="overview"] .dash-top-hood,
+.cockpit-shell[data-view="overview"] .dash-air-wave-slot,
+.cockpit-shell[data-view="overview"] .dash-wood-decor,
+.cockpit-shell[data-view="overview"] .cockpit-steering-wheel,
+.cockpit-shell[data-view="overview"] .windshield-optical-tint {
+  display: none !important;
+}
+
+.cockpit-shell[data-view="overview"] .cockpit-windshield-zone {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65) !important;
+}
+
+.cockpit-shell[data-view="overview"] .windshield-road-backdrop,
+.cockpit-shell[data-view="overview"] #canvas-windshield-3d {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+/* 在 3D 座艙總覽下，三塊屏幕 (cluster/center/passenger) 由 Three.js 3D 網格與 CanvasTexture 實時渲染，
+   原本的 DOM 容器保持固定尺寸於幕後供紋理採樣，切換至單屏檢視時則恢復全屏顯示 */
+.cockpit-shell[data-view="overview"] .cockpit-dashboard-wing {
+  position: fixed !important;
+  left: -9999px !important;
+  top: 0 !important;
+  width: 1440px !important;
+  height: 600px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+/* HUD 作為擋風玻璃上的無框透明疊加層，直接疊在擋風玻璃外的 3D 道路上 */
+.cockpit-shell[data-view="overview"] .unit-hud {
+  position: absolute !important;
+  top: 3% !important;
+  left: 8% !important;
+  width: 52% !important;
+  height: 30% !important;
+  z-index: 25 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+}
+
+/* 手機完整顯示在座艙總覽場景右側，絕不裁切 */
+.cockpit-shell[data-view="overview"] .unit-mobile {
+  position: absolute !important;
+  right: 16px !important;
+  top: 10px !important;
+  bottom: 10px !important;
+  width: 276px !important;
+  max-height: calc(100% - 20px) !important;
+  z-index: 40 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.cockpit-shell[data-view="overview"] .unit-mobile .physical-iphone-frame {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+/* 2. 中控屏彈窗全部改為覆蓋整個中控屏的全屏頁（保留底部 Dock） */
+.center-modal-layer {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 52px !important;
+  padding: 0 !important;
+  z-index: 48 !important;
+  display: none;
+}
+
+.center-modal-layer.is-open {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  background: var(--bg-elevated) !important;
+}
+
+.center-popover.center-fullscreen-page,
+.center-popover {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: var(--bg-elevated) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.center-fullscreen-page .popover-header {
+  padding: 12px 18px !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  flex-shrink: 0 !important;
+}
+
+/* 2A. 設置全屏頁：左側加大分類列 + 右側雙欄卡片網格 */
+.settings-popover .settings-split-layout {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 200px 1fr !important;
+  height: 100% !important;
+}
+
+.settings-sidebar-nav-large {
+  padding: 12px 10px !important;
+  gap: 6px !important;
+  border-right: 1px solid var(--border-subtle) !important;
+  background: rgba(15, 23, 42, 0.35) !important;
+}
+
+[data-theme="day"] .settings-sidebar-nav-large {
+  background: rgba(241, 245, 249, 0.9) !important;
+}
+
+.settings-sidebar-nav-large .settings-nav-btn {
+  padding: 11px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  gap: 10px !important;
+}
+
+.settings-sidebar-nav-large .settings-nav-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.settings-tab-body {
+  padding: 14px 18px !important;
+  overflow-y: auto !important;
+  height: 100% !important;
+}
+
+.settings-cards-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-content: start !important;
+}
+
+.settings-cards-grid .settings-section {
+  background: rgba(30, 41, 59, 0.42) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  margin-bottom: 0 !important;
+}
+
+[data-theme="day"] .settings-cards-grid .settings-section {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.settings-toggle-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  color: var(--text-secondary) !important;
+}
+
+/* 2B. 空調全屏頁：左側車內俯視出風口/座椅加熱圖 + 右側雙區大字溫度與風量滑桿 */
+.climate-fullscreen-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1.15fr 1fr !important;
+  gap: 16px !important;
+  padding: 14px 18px !important;
+  overflow: hidden !important;
+}
+
+.climate-cabin-visual-col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+}
+
+.climate-cabin-canvas-wrap {
+  flex: 1 1 auto !important;
+  min-height: 180px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: #0b111c !important;
+  position: relative !important;
+}
+
+.climate-cabin-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.climate-vent-dir-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 8px 12px !important;
+  border-radius: 12px !important;
+  background: rgba(30, 41, 59, 0.45) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme="day"] .climate-vent-dir-bar {
+  background: #f8fafc !important;
+}
+
+.vent-bar-label {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+}
+
+.climate-controls-col {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+}
+
+.climate-controls-col .zone-temp-val {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+}
+
+.fan-slider-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 6px !important;
+  font-size: 12px !important;
+}
+
+.climate-toggles-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+/* 2C. 充電全屏頁：電量環 + 250kW 功率曲線 + 附近超充站列表 */
+.charging-fullscreen-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1.32fr !important;
+  gap: 16px !important;
+  padding: 14px 18px !important;
+  overflow: hidden !important;
+}
+
+.charging-left-panel,
+.charging-right-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+}
+
+.soc-ring-card,
+.charging-limit-card,
+.charging-curve-card,
+.nearby-sc-card {
+  background: rgba(30, 41, 59, 0.42) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+}
+
+[data-theme="day"] .soc-ring-card,
+[data-theme="day"] .charging-limit-card,
+[data-theme="day"] .charging-curve-card,
+[data-theme="day"] .nearby-sc-card {
+  background: #ffffff !important;
+}
+
+.soc-ring-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+.soc-ring-svg-wrap {
+  position: relative !important;
+  width: 124px !important;
+  height: 124px !important;
+  flex-shrink: 0 !important;
+}
+
+.soc-ring-svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.soc-ring-center {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.soc-ring-num {
+  font-size: 24px !important;
+  font-weight: 800 !important;
+}
+
+.soc-ring-km {
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+}
+
+.soc-ring-meta {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.soc-meta-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 11.5px !important;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.14) !important;
+  padding-bottom: 4px !important;
+}
+
+.charging-curve-card {
+  flex: 1 1 145px !important;
+  min-height: 135px !important;
+  padding: 6px !important;
+  overflow: hidden !important;
+}
+
+.charging-curve-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  border-radius: 10px !important;
+}
+
+.nearby-sc-card {
+  flex: 1.15 1 160px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.nearby-sc-list {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin-top: 6px !important;
+}
+
+.nearby-sc-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 7px 10px !important;
+  border-radius: 10px !important;
+  text-align: left !important;
+}
+
+.sc-row-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.sc-power-pill {
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #f87171 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  flex-shrink: 0 !important;
+}
+
+.sc-row-title {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.sc-row-sub {
+  font-size: 10px !important;
+  color: var(--text-secondary) !important;
+}
+
+.sc-row-right {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  flex-shrink: 0 !important;
+}
+
+.sc-stall-badge {
+  font-size: 10px !important;
+  color: #10b981 !important;
+  font-weight: 700 !important;
+}
+
+.sc-dist-txt {
+  font-size: 11px !important;
+}
+
+/* 2D. 360 相機全屏頁 */
+.cam360-fullscreen-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1.72fr 0.9fr !important;
+  gap: 14px !important;
+  padding: 12px 18px !important;
+  overflow: hidden !important;
+}
+
+.cam360-main-stage {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+}
+
+.cam360-main-stage .cam360-canvas-wrap {
+  flex: 1 1 auto !important;
+  min-height: 220px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.cam360-telemetry-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.cam-side-card {
+  background: rgba(30, 41, 59, 0.42) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+}
+
+[data-theme="day"] .cam-side-card {
+  background: #ffffff !important;
+}
+
+.cam-side-card h6 {
+  margin: 0 0 8px 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+}
+
+.cam-dist-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 6px 0 !important;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.15) !important;
+  font-size: 12px !important;
+}
+
+.cam-dist-row strong.is-safe {
+  color: #10b981 !important;
+}
+
+.cam-dist-row strong.is-warn {
+  color: #f59e0b !important;
+}
+
+/* 2E. 應用中心全屏頁 */
+.apps-fullscreen-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 14px 18px !important;
+  overflow-y: auto !important;
+}
+
+.apps-grid-8 {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.apps-grid-8 .app-launcher-tile {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  text-align: left !important;
+  gap: 6px !important;
+}
+
+.app-tile-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+.app-tile-badge {
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 999px !important;
+  background: rgba(56, 189, 248, 0.16) !important;
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+.app-tile-text {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.app-tile-desc {
+  font-size: 10.5px !important;
+  color: var(--text-secondary) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.app-workspace-card {
+  flex: 1 1 auto !important;
+  background: rgba(30, 41, 59, 0.42) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+[data-theme="day"] .app-workspace-card {
+  background: #ffffff !important;
+}
+
+.app-ws-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.app-ws-header h5 {
+  margin: 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+}
+
+.app-ws-header p {
+  margin: 2px 0 0 0 !important;
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+}
+
+.ws-status-pill {
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #10b981 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.energy-breakdown-grid,
+.calendar-events-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.energy-stat-box,
+.calendar-event-card,
+.browser-info-tile,
+.toybox-card {
+  background: rgba(15, 23, 42, 0.45) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+[data-theme="day"] .energy-stat-box,
+[data-theme="day"] .calendar-event-card,
+[data-theme="day"] .browser-info-tile,
+[data-theme="day"] .toybox-card {
+  background: #f8fafc !important;
+}
+
+.calendar-event-card {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.cal-time-badge {
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+
+.browser-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.browser-url-bar {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11.5px !important;
+}
+
+.browser-content-grid,
+.toybox-modes-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+/* 2F. 電話全屏頁（左撥號盤 + 中通話舞台 + 右聯絡人/通話記錄） */
+.phone-fullscreen-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 0.95fr 1.05fr 1.25fr !important;
+  gap: 14px !important;
+  padding: 14px 18px !important;
+  overflow: hidden !important;
+}
+
+.phone-dialpad-col,
+.phone-active-call-col,
+.phone-contacts-col {
+  background: rgba(30, 41, 59, 0.42) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+[data-theme="day"] .phone-dialpad-col,
+[data-theme="day"] .phone-active-call-col,
+[data-theme="day"] .phone-contacts-col {
+  background: #ffffff !important;
+}
+
+.dialpad-screen {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  margin-bottom: 8px !important;
+}
+
+[data-theme="day"] .dialpad-screen {
+  background: #f1f5f9 !important;
+}
+
+.dialpad-number {
+  font-family: var(--font-mono) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.dialpad-keys-grid {
+  flex: 1 1 auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin-bottom: 8px !important;
+}
+
+.dialpad-key-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 4px !important;
+  border-radius: 10px !important;
+}
+
+.dialpad-key-btn strong {
+  font-size: 16px !important;
+  line-height: 1.1 !important;
+}
+
+.dialpad-key-btn small {
+  font-size: 9px !important;
+  color: var(--text-secondary) !important;
+}
+
+.dial-call-submit-btn {
+  width: 100% !important;
+  justify-content: center !important;
+  padding: 9px !important;
+  font-weight: 700 !important;
+}
+
+.active-call-stage {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+.call-avatar-ring {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  border: 2px solid #10b981 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #10b981 !important;
+}
+
+.call-avatar-ring.is-idle {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+
+.call-person-name {
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.call-person-meta {
+  margin: 0 !important;
+  font-size: 12px !important;
+  color: var(--text-secondary) !important;
+}
+
+.phone-list-scroll {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+
+/* 2G. 語音全屏頁（三態切換 + 聲波動畫畫布 + 快捷語音指令） */
+.voice-fullscreen-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 14px 18px !important;
+  overflow: hidden !important;
+}
+
+.voice-phase-switcher {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.voice-phase-pill {
+  padding: 9px 14px !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  gap: 8px !important;
+}
+
+.phase-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+
+.phase-dot.is-listen { background: #38bdf8 !important; }
+.phase-dot.is-recog { background: #a855f7 !important; }
+.phase-dot.is-exec { background: #10b981 !important; }
+
+.voice-wave-stage {
+  flex: 1 1 auto !important;
+  min-height: 150px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border-subtle) !important;
+  position: relative !important;
+  background: #0a101b !important;
+}
+
+.voice-wave-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.voice-transcript-overlay {
+  position: absolute !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 12px !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  background: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+/* 3. 手機 App 子頁收起頂部 3D 大圖，改為緊湊車輛摘要條 */
+.mobile-3d-viewport.is-subpage-collapsed {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.mobile-compact-summary-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 6px 12px !important;
+  margin-bottom: 6px !important;
+  border-radius: 10px !important;
+  background: rgba(30, 41, 59, 0.65) !important;
+  border: 1px solid var(--border-subtle) !important;
+  font-size: 11px !important;
+  flex-shrink: 0 !important;
+}
+
+[data-theme="day"] .mobile-compact-summary-bar {
+  background: #f1f5f9 !important;
+}
+
+.mcs-left, .mcs-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.mcs-soc {
+  font-weight: 700 !important;
+  color: #10b981 !important;
+}
+
+/* 4. 副駕屏列表行距與高度統一 */
+.passenger-playlist .playlist-items {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.passenger-playlist .playlist-row {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 6px 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+}
+
+/* 5. 儀錶盤報警膠囊置頂，絕不遮擋中央前車 */
+.cluster-center-pod {
+  justify-content: flex-start !important;
+  padding-top: 2px !important;
+}
+
+.cluster-alert-strip {
+  margin-top: 0 !important;
+  transform: translateY(-2px) !important;
+}
