@@ -390,6 +390,7 @@ export class SceneEngine {
   buildCockpitInterior3D() {
     this.cockpitInteriorGroup = new THREE.Group();
     this.cockpitInteriorGroup.position.set(0, 0, 1.35);
+    this.cockpitInteriorGroup.visible = false;
     this.scene.add(this.cockpitInteriorGroup);
 
     const alcantaraMat = new THREE.MeshStandardMaterial({ color: 0x191d24, roughness: 0.78, metalness: 0.08 });
@@ -1890,7 +1891,7 @@ export class SceneEngine {
         const isOutTheWindow = viewId === 'hud' || viewId === 'windshield';
 
         if (this.cockpitInteriorGroup) {
-          this.cockpitInteriorGroup.visible = viewId === 'windshield';
+          this.cockpitInteriorGroup.visible = false;
         }
         if (this.roadGroup) {
           this.roadGroup.visible = viewId !== 'mobile';
