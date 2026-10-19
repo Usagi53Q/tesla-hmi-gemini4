@@ -4847,25 +4847,7 @@ button.tpms-cell {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65) !important;
 }
 
-.cockpit-shell[data-view="overview"] .windshield-road-backdrop,
-.cockpit-shell[data-view="overview"] #canvas-windshield-3d {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-}
-
-/* 在 3D 座艙總覽下，三塊屏幕 (cluster/center/passenger) 由 Three.js 3D 網格與 CanvasTexture 實時渲染，
-   原本的 DOM 容器保持固定尺寸於幕後供紋理採樣，切換至單屏檢視時則恢復全屏顯示 */
-.cockpit-shell[data-view="overview"] .cockpit-dashboard-wing {
-  position: fixed !important;
-  left: -9999px !important;
-  top: 0 !important;
-  width: 1440px !important;
-  height: 600px !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  overflow: hidden !important;
-}
+/* 恢復 3D 座艙總覽下，三塊屏幕 (cluster/center/passenger) 正常在儀錶台展示 */
 
 /* HUD 作為擋風玻璃上的無框透明疊加層，直接疊在擋風玻璃外的 3D 道路上 */
 .cockpit-shell[data-view="overview"] .unit-hud {
