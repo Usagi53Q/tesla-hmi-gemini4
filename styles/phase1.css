@@ -1,0 +1,2049 @@
+/**
+ * 階段一：Tesla Model 3 中控屏 (1920×1200 固定畫布等比縮放) 專用樣式表
+ * -----------------------------------------------------------------------------
+ * 嚴格遵守視覺與動效規範：
+ * 1. 固定 1920×1200 設計畫布，按窗口等比縮放，絕不重排或跑版。
+ * 2. 中性灰黑與白配色，強調色 (#3b82f6) 僅用於極少數啟用狀態；除霜開關啟用時為琥珀橘 (#f59e0b)。
+ * 3. Inter 幾何無襯線體，所有數字使用等寬字體與 tabular-nums；全界面最小字級 >= 12px。
+ * 4. 浮層與抽屜採用 280ms cubic-bezier(0.16, 1, 0.3, 1) ease-out 滑入滑出動效。
+ * 5. 按下 (:active)、拖動 (.is-dragging)、禁用 (:disabled/.is-disabled)、載入 (.is-loading) 四態具清晰視覺回饋。
+ */
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  --ease-out-tesla: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #090b0e;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  color: #f3f4f6;
+}
+
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 外層等比縮放舞台 */
+.viewport-scaler-stage {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 45%, #161920 0%, #090b0e 100%);
+  overflow: hidden;
+}
+
+/* 1920×1200 固定設計畫布（絕不重排） */
+.center-fixed-canvas {
+  width: 1920px;
+  height: 1200px;
+  min-width: 1920px;
+  min-height: 1200px;
+  max-width: 1920px;
+  max-height: 1200px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  overflow: hidden;
+  transform-origin: center center;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.78), 0 0 0 2px rgba(255, 255, 255, 0.1);
+  transition: background-color 280ms var(--ease-out-tesla), color 280ms var(--ease-out-tesla);
+
+  /* 夜間主題變數 (預設：中性深灰黑與白) */
+  --bg-canvas: #111317;
+  --bg-pane: #16191f;
+  --bg-card: #1e222a;
+  --bg-card-hover: #262b35;
+  --bg-elevated: rgba(24, 28, 35, 0.96);
+  --bg-glass: rgba(22, 25, 31, 0.9);
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --border-line: rgba(255, 255, 255, 0.1);
+  --accent-blue: #3b82f6;
+  --accent-amber: #f59e0b;
+  --danger-red: #ef4444;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+/* 日間淺色主題變數 */
+.center-fixed-canvas[data-theme="day"] {
+  --bg-canvas: #f3f4f6;
+  --bg-pane: #ffffff;
+  --bg-card: #eef0f4;
+  --bg-card-hover: #e2e5ec;
+  --bg-elevated: rgba(255, 255, 255, 0.97);
+  --bg-glass: rgba(255, 255, 255, 0.92);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-line: rgba(17, 24, 39, 0.12);
+}
+
+/* 通用按鈕與四態回饋（按下、拖動、禁用、載入） */
+button {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+button:disabled,
+button.is-disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.is-dragging {
+  cursor: grabbing !important;
+  outline: 2px solid var(--accent-blue);
+}
+
+@keyframes pulseLoading {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.52; }
+}
+
+.is-loading,
+.is-loading-btn {
+  animation: pulseLoading 1s infinite ease-in-out;
+}
+
+.ui-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* 頂部車型配置與階段一驗收工具列 */
+.phase1-top-strip {
+  height: 46px;
+  padding: 0 20px;
+  background: var(--bg-pane);
+  border-bottom: 1px solid var(--border-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-shrink: 0;
+  z-index: 60;
+}
+
+.top-strip-left,
+.top-strip-right,
+.top-config-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-brand-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  letter-spacing: 0.03em;
+}
+
+.strip-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.strip-btn.is-active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.strip-btn.is-accent {
+  border-color: var(--accent-blue);
+}
+
+.strip-btn.is-disabled-config {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.top-manual-ref {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.top-manual-ref a {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.temp-mode-active-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 主工作區 (1920 x 1078) */
+.center-main-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左側：3D 車輛視圖區 (收合時 680px，展開時 780px，平滑過渡) */
+.vehicle-view-pane {
+  width: 680px;
+  height: 100%;
+  background: var(--bg-pane);
+  border-right: 1px solid var(--border-line);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 20;
+  transition: width 300ms var(--ease-out-tesla);
+  flex-shrink: 0;
+}
+
+.vehicle-view-pane.is-expanded {
+  width: 780px;
+}
+
+/* 車輛頂部狀態列 */
+.vehicle-status-bar {
+  height: 56px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-line);
+  flex-shrink: 0;
+}
+
+.vsb-left,
+.vsb-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gear-Cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gear-pill {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+
+.gear-pill.is-active {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+}
+
+.vsb-lock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vsb-battery-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+.bat-bar-wrap {
+  width: 28px;
+  height: 12px;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 3px;
+  padding: 1px;
+  display: inline-block;
+}
+
+.bat-bar-fill {
+  display: block;
+  height: 100%;
+  background: #22c55e;
+  border-radius: 1px;
+}
+
+.vsb-time {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.airbag-badge {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+
+/* 3D 車輛畫布與指向線舞台 */
+.vehicle-3d-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.vehicle-3d-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vehicle-callout-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.callout-leader-line {
+  stroke: rgba(156, 163, 175, 0.55);
+  stroke-width: 0.35;
+  stroke-dasharray: 1.2 0.8;
+}
+
+.callout-leader-line.is-open {
+  stroke: var(--accent-blue);
+  stroke-width: 0.45;
+  stroke-dasharray: none;
+}
+
+.callout-anchor-dot {
+  fill: #e5e7eb;
+  stroke: #111827;
+  stroke-width: 0.3;
+}
+
+.callout-anchor-dot.is-open {
+  fill: var(--accent-blue);
+}
+
+.vehicle-callout-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.callout-pill-btn {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+.callout-pill-btn.is-open {
+  border-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.callout-btn-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.callout-btn-text strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.callout-btn-text span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.camera-quick-actions {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.cam-action-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-elevated);
+}
+
+.cam-action-btn.is-active {
+  border-color: var(--accent-blue);
+}
+
+.vehicle-camera-hud {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.cam-inactivity-badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.22);
+  border: 1px solid var(--accent-blue);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cam-mode-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-line);
+}
+
+/* 左下：緊湊音樂卡片 */
+.compact-media-card {
+  margin: 0 16px 16px 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cmc-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cmc-cover-wrap {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cmc-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.cmc-title {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmc-artist {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmc-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cmc-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-btn.is-fav,
+.media-ctrl-btn.is-fav {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.icon-btn.is-active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.cmc-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(156, 163, 175, 0.22);
+  border-radius: 999px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cmc-progress-fill {
+  height: 100%;
+  background: var(--text-primary);
+  border-radius: 999px;
+  transition: width 200ms linear;
+}
+
+.cmc-controls-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.media-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.media-ctrl-btn.is-primary {
+  background: var(--text-primary);
+  color: var(--bg-canvas);
+}
+
+/* 右側：OpenStreetMap 導航地圖與互動層 */
+.navigation-map-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #13171f;
+}
+
+.nav-pan-zoom-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.nav-pan-zoom-stage {
+  position: absolute;
+  width: 1240px;
+  height: 1240px;
+  left: 0;
+  top: -80px;
+  transform-origin: 50% 50%;
+  transition: transform 90ms linear;
+}
+
+.osm-prerendered-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.nav-route-svg-layer,
+.nav-place-labels-layer,
+.nav-poi-pins-layer,
+.nav-ego-car-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* 獨立文字地名層 */
+.osm-place-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  white-space: nowrap;
+}
+
+.osm-label-cn {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.osm-label-en {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 獨立充電站與地點標記層 */
+.osm-poi-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-line);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+.osm-poi-pin.is-selected {
+  border-color: var(--accent-blue);
+  background: rgba(30, 41, 59, 0.96);
+  color: #ffffff;
+  z-index: 15;
+}
+
+.poi-pin-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.poi-pin-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 獨立駐停自車車標 */
+.ego-car-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ego-arrow-disc {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ego-parked-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* 地圖左上：搜尋、路線比較與導航演示面板 */
+.nav-overlay-top-left {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 420px;
+  z-index: 18;
+}
+
+.nav-search-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.nav-search-input {
+  flex: 1 1 auto;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+}
+
+.nav-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nav-filter-btn.is-active {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.nav-poi-quick-list {
+  max-height: 176px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nav-poi-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  text-align: left;
+  gap: 8px;
+}
+
+.nav-poi-item.is-selected {
+  border-color: var(--accent-blue);
+}
+
+.npi-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.npi-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.npi-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.npi-dist {
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.nav-route-summary-box {
+  border-top: 1px solid var(--border-line);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nrs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nrs-dest-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nrs-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nav-compare-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nav-compare-btn.is-active {
+  border-color: var(--accent-blue);
+}
+
+.route-compare-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.route-opt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.route-opt-btn.is-selected {
+  border-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.14);
+}
+
+.ro-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ro-stats {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nav-guidance-banner {
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid var(--accent-blue);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ngb-step strong {
+  display: block;
+  font-size: 13px;
+}
+
+.ngb-step span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nav-start-btn {
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nav-start-btn.is-primary {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.nav-start-btn.is-danger {
+  background: var(--danger-red);
+  color: #ffffff;
+  border-color: var(--danger-red);
+}
+
+/* 地圖右上與右下控制列 */
+.nav-overlay-top-right {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 18;
+}
+
+.nav-top-right-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-status-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nav-overlay-bottom-right {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 18;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.nav-map-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.nav-pan-dpad,
+.nav-zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-ctrl-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.osm-attribution-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 疊在地圖上的獨立音樂播放窗 */
+.map-music-window {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: 540px;
+  max-height: 520px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  z-index: 26;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+  transition: opacity 280ms var(--ease-out-tesla), transform 280ms var(--ease-out-tesla);
+}
+
+.map-music-window.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.mmw-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mmw-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mmw-header-title h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.mmw-header-title span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mmw-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.mmw-now-playing {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mmw-np-info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mmw-np-title {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mmw-np-sub,
+.mmw-np-album {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mmw-np-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mmw-scrubber-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.mmw-scrubber-row input[type="range"] {
+  flex: 1 1 auto;
+}
+
+.mmw-queue-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.mmw-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mmw-queue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.mmw-queue-row.is-active {
+  border-color: var(--accent-blue);
+}
+
+.mmw-q-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mmw-q-num {
+  font-size: 12px;
+  width: 18px;
+}
+
+.mmw-q-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mmw-q-artist {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mmw-q-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.fav-tag {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+/* 抽屜一：12 大官方手冊分類「車輛設置抽屜」 (280ms ease-out 滑動動效) */
+.settings-drawer-backdrop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 780px;
+  right: 0;
+  z-index: 35;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-28px);
+  transition: opacity 280ms var(--ease-out-tesla), transform 280ms var(--ease-out-tesla);
+}
+
+.settings-drawer-backdrop.is-open {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.settings-drawer-panel {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--border-line);
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  overflow: hidden;
+}
+
+.settings-nav-rail {
+  padding: 16px 12px;
+  border-right: 1px solid var(--border-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.settings-rail-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: transparent;
+  border-color: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.settings-rail-btn.is-active {
+  background: var(--bg-card);
+  border-color: var(--border-line);
+}
+
+.settings-content-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.settings-content-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-content-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.settings-manual-caption {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.settings-cards-scroll {
+  flex: 1 1 auto;
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-group-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-group-card h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.settings-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.segmented-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.seg-btn {
+  flex: 1 1 auto;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.seg-btn.is-selected {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.seg-btn.is-danger-btn {
+  border-color: var(--danger-red);
+  color: var(--danger-red);
+}
+
+.toggle-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.toggle-item-row strong {
+  display: block;
+  font-size: 14px;
+}
+
+.toggle-item-row span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.switch-pill {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(156, 163, 175, 0.28);
+  padding: 3px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.switch-pill.is-on {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.switch-knob {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 200ms var(--ease-out-tesla);
+}
+
+.switch-pill.is-on .switch-knob {
+  transform: translateX(24px);
+}
+
+.dep-reason-text {
+  font-size: 12px;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.stepper-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepper-slider-row input[type="range"] {
+  flex: 1 1 auto;
+  height: 6px;
+}
+
+.step-btn {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.keys-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.key-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--bg-pane);
+  border: 1px solid var(--border-line);
+}
+
+.key-item-row strong {
+  display: block;
+  font-size: 13px;
+}
+
+.key-item-row span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.trips-stat-grid,
+.tpms-4-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.trip-stat-tile,
+.tpms-box {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-pane);
+  border: 1px solid var(--border-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trip-stat-tile span,
+.tpms-box span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.trip-stat-tile strong,
+.tpms-box strong {
+  font-size: 15px;
+}
+
+.odometer-footer {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.software-spec-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sw-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-line);
+  font-size: 13px;
+}
+
+.sw-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sw-version-row strong {
+  display: block;
+  font-size: 15px;
+}
+
+.sw-version-row span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 抽屜二：從底部彈出的「空調與前排座椅抽屜」 (300ms ease-out 上滑動效) */
+.climate-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 42;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms var(--ease-out-tesla);
+}
+
+.climate-drawer-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.climate-drawer-panel {
+  width: 1480px;
+  height: 560px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 300ms var(--ease-out-tesla);
+}
+
+.climate-drawer-backdrop.is-open .climate-drawer-panel {
+  transform: translateY(0);
+}
+
+.drawer-header {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-tabs,
+.drawer-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drawer-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.drawer-tab-btn.is-active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.cabin-temp-pill {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.climate-drawer-grid,
+.seat-drawer-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 20px;
+}
+
+.climate-3d-stage-wrap,
+.seat-visual-box {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-line);
+  background: #0f131a;
+  display: flex;
+  flex-direction: column;
+}
+
+.climate-3d-canvas,
+.seat-view-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+.stage-vent-coords,
+.seat-drag-hint,
+.stage-disabled-notice {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  font-size: 12px;
+  text-align: center;
+}
+
+.stage-disabled-notice {
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.climate-controls-stack,
+.seat-controls-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.climate-primary-switches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.climate-sw-btn {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.climate-sw-btn strong {
+  font-size: 13px;
+}
+
+.climate-sw-btn span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.climate-sw-btn.is-active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.climate-sw-btn.is-active span {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.climate-sw-btn.is-defrost-btn.is-active {
+  background: var(--accent-amber);
+  border-color: var(--accent-amber);
+  color: #111827;
+}
+
+.climate-sw-btn.is-defrost-btn.is-active span {
+  color: #111827;
+}
+
+.climate-fan-box,
+.seat-slider-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.climate-dual-temp-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.temp-zone-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.tz-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tz-stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tz-val {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.climate-keep-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* 調整對話框與行為對照表彈窗 */
+.adjustment-dialog-layer,
+.matrix-modal-layer {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms var(--ease-out-tesla);
+}
+
+.adjustment-dialog-layer.is-open,
+.matrix-modal-layer.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.adj-dialog-card {
+  width: 560px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+}
+
+.adj-dialog-header,
+.matrix-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-line);
+}
+
+.adj-dialog-header h4,
+.matrix-modal-header h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.matrix-modal-header span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.matrix-modal-card {
+  width: 1640px;
+  max-height: 920px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  border-radius: 20px;
+  padding: 20px 26px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.matrix-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.matrix-section-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+.matrix-section-box h4 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+
+.config-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.config-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-pane);
+  border: 1px solid var(--border-line);
+}
+
+.config-card.is-active {
+  border-color: var(--accent-blue);
+}
+
+.config-card p,
+.tech-honesty-note {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ref-sources-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.ref-source-item {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bg-pane);
+  border: 1px solid var(--border-line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.ref-source-item a {
+  color: var(--text-primary);
+}
+
+.behavior-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.behavior-matrix-table th,
+.behavior-matrix-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.status-badge.is-pass {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+  font-weight: 700;
+}
+
+/* 底部常駐 Dock (高度 76px) */
+.center-bottom-dock {
+  height: 76px;
+  padding: 0 28px;
+  background: #0d0f13;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-shrink: 0;
+  z-index: 45;
+}
+
+.center-fixed-canvas[data-theme="day"] .center-bottom-dock {
+  background: #e5e7eb;
+  border-top: 1px solid rgba(17, 24, 39, 0.12);
+}
+
+.dock-car-btn,
+.dock-vol-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dock-car-btn.is-active,
+.dock-vol-btn.is-active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.dock-temp-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dock-step-btn {
+  width: 36px;
+  height: 44px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dock-temp-readout {
+  min-width: 106px;
+  height: 48px;
+  padding: 4px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-temp-readout strong {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.dock-temp-readout small {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dock-apps-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dock-app-btn {
+  height: 52px;
+  min-width: 78px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dock-app-btn.is-active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.dock-app-btn.is-defrost-on {
+  background: var(--accent-amber);
+  color: #111827;
+  border-color: var(--accent-amber);
+}
+
+/* 音量展開滑桿浮層 */
+.dock-volume-popover {
+  position: absolute;
+  right: 28px;
+  bottom: 88px;
+  width: 340px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-line);
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+  z-index: 48;
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 250ms var(--ease-out-tesla), transform 250ms var(--ease-out-tesla);
+}
+
+.dock-volume-popover.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.vol-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+/* 屏幕清潔模式全屏遮罩 */
+.screen-clean-overlay {
+  position: absolute;
+  inset: 0;
+  background: #050608;
+  color: #f3f4f6;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms var(--ease-out-tesla);
+}
+
+.screen-clean-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.screen-clean-box {
+  text-align: center;
+  max-width: 560px;
+  padding: 36px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(17, 19, 23, 0.9);
+}
+
+.screen-clean-box h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+}
+
+.screen-clean-box p {
+  margin: 0 0 22px 0;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.clean-exit-btn {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+/* Toast 狀態膠囊 */
+.phase1-toast-banner {
+  position: absolute;
+  top: 62px;
+  left: 50%;
+  transform: translate(-50%, -14px);
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  z-index: 85;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.phase1-toast-banner.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

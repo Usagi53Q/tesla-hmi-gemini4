@@ -1,37 +1,33 @@
 /**
- * TESLA MODEL 3 COCKPIT HMI — APPLICATION ENTRY POINT
+ * 階段一：Tesla Model 3 中控屏 (1920×1200 固定設計畫布) 啟動入口
  */
-import { vehicleStore } from './state/vehicleStore.js?v=35';
-import { SceneEngine } from './engine/SceneEngine.js?v=35';
-import { MapAndMediaEngine } from './engine/MapAndMediaCanvas.js?v=35';
-import { CockpitApp } from './ui/CockpitApp.js?v=35';
+import { phase1Store, validateAndHydrateState, createDefaultState } from './state/phase1Store.js?v=40';
+import { Center3DEngine } from './engine/Center3DEngine.js?v=40';
+import { CenterDisplayApp } from './ui/CenterDisplayApp.js?v=40';
+import { VEHICLE_CONFIGS } from './config/vehicleConfigs.js?v=40';
+import { PHASE1_BEHAVIOR_MATRIX } from './config/behaviorMatrix.js?v=40';
 
-function bootstrapHMI() {
+function bootstrapPhase1() {
   const rootEl = document.getElementById('app');
   if (!rootEl || rootEl.dataset.bootstrapped === 'true') return;
   rootEl.dataset.bootstrapped = 'true';
 
-  let sceneEngine;
-  try {
-    sceneEngine = new SceneEngine(vehicleStore);
-  } catch (err) {
-    console.error('[Tesla HMI] SceneEngine fallback initialized:', err);
-    sceneEngine = { registerCanvas: () => {} };
-  }
+  const engine3D = new Center3DEngine(phase1Store);
+  const app = new CenterDisplayApp(rootEl, phase1Store, engine3D);
 
-  const mapMediaEngine = new MapAndMediaEngine(vehicleStore);
-  const app = new CockpitApp(rootEl, vehicleStore, sceneEngine, mapMediaEngine);
-
-  window.__TESLA_HMI__ = {
-    store: vehicleStore,
-    sceneEngine,
-    mapMediaEngine,
-    app
+  window.__TESLA_PHASE1__ = {
+    store: phase1Store,
+    engine3D,
+    app,
+    VEHICLE_CONFIGS,
+    PHASE1_BEHAVIOR_MATRIX,
+    validateAndHydrateState,
+    createDefaultState
   };
 }
 
 if (document.readyState === 'loading') {
-  window.addEventListener('DOMContentLoaded', bootstrapHMI);
+  window.addEventListener('DOMContentLoaded', bootstrapPhase1);
 } else {
-  bootstrapHMI();
+  bootstrapPhase1();
 }

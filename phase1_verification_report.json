@@ -1,0 +1,232 @@
+{
+  "phase": "Phase 1 — Tesla Model 3 Center Display (1920x1200)",
+  "completedAt": "2026-10-20T08:32:41.975Z",
+  "totalAssertions": 16,
+  "passedAssertions": 16,
+  "assertions": [
+    {
+      "name": "P1-01 & P1-03 收合正俯視與左右控制位置",
+      "passed": true,
+      "detail": "chargeLeftX=72px, frunkRightX=491px, wheelBlocked=1",
+      "timestamp": "2026-10-20T08:32:05.794Z"
+    },
+    {
+      "name": "P1-02 展開視角旋轉與雙擊重置",
+      "passed": true,
+      "detail": "旋轉後 yaw=26°, 雙擊重置後 yaw=36°, pitch=18°",
+      "timestamp": "2026-10-20T08:32:08.934Z"
+    },
+    {
+      "name": "P1-04 空調抽屜與電源依賴禁用規則",
+      "passed": true,
+      "detail": "空調系統電源已關閉，請先點擊「空調電源」開啟系統",
+      "timestamp": "2026-10-20T08:32:11.313Z"
+    },
+    {
+      "name": "P1-05 前排座椅調節與 localStorage 類型/範圍驗證",
+      "passed": true,
+      "detail": "已攔截異常欄位: seats.driver.foreAftMm, seats.driver.reclineDeg, seats.driver.heightMm, settings.accelMode, settings.chargeLimitPercent, settings.keysList",
+      "timestamp": "2026-10-20T08:32:12.965Z"
+    },
+    {
+      "name": "P1-06 OSM 離線預渲染底圖、三路線比較與駐停導航演示",
+      "passed": true,
+      "detail": "OSM 底圖已載入, gear=P, speed=0 km/h",
+      "timestamp": "2026-10-20T08:32:14.576Z"
+    },
+    {
+      "name": "P1-07 緊湊音樂卡片與地圖疊層獨立播放窗同步 + 音量滑桿",
+      "passed": true,
+      "detail": "同步曲目: 六本木天際線脈動",
+      "timestamp": "2026-10-20T08:32:15.875Z"
+    },
+    {
+      "name": "P1-08-DYN 動態設置與限速模式鎖定舒適加速規則",
+      "passed": true,
+      "detail": "限速模式啟用中：加速模式已強制鎖定為「舒適」",
+      "timestamp": "2026-10-20T08:32:19.103Z"
+    },
+    {
+      "name": "P1-08-CHG 充電設置與解鎖充電口依賴規則",
+      "passed": true,
+      "detail": "充電口蓋目前已關閉，需先開啟充電口蓋才可解鎖充電口",
+      "timestamp": "2026-10-20T08:32:21.015Z"
+    },
+    {
+      "name": "P1-08-AP 自動輔助駕駛依賴禁用規則",
+      "passed": true,
+      "detail": "需先開啟「自動輔助轉向 (Autosteer)」才可啟用此進階功能",
+      "timestamp": "2026-10-20T08:32:22.330Z"
+    },
+    {
+      "name": "P1-08-LOCK 車鎖與離車自動上鎖依賴規則",
+      "passed": true,
+      "detail": "需先開啟「離車後自動上鎖」才可配置此關聯選項",
+      "timestamp": "2026-10-20T08:32:24.056Z"
+    },
+    {
+      "name": "P1-08-LIGHT 車燈關閉時禁用前霧燈與自動遠光規則",
+      "passed": true,
+      "detail": "需先開啟「近光燈」或「自動大燈」才可啟用前霧燈",
+      "timestamp": "2026-10-20T08:32:25.956Z"
+    },
+    {
+      "name": "P1-08-SCHED 日程與預約出發依賴規則",
+      "passed": true,
+      "detail": "需先開啟「預約出發」排程才可配置預熱與週期選項",
+      "timestamp": "2026-10-20T08:32:31.105Z"
+    },
+    {
+      "name": "P1-08-SAFE 安全與最高限速滑桿依賴規則",
+      "passed": true,
+      "detail": "需先啟用「限速模式」才可調整最高限速設定值",
+      "timestamp": "2026-10-20T08:32:33.032Z"
+    },
+    {
+      "name": "P1-08-SRV 臨時模式（洗車模式）覆蓋與退出後精確恢復原偏好",
+      "passed": true,
+      "detail": "覆蓋時 wipers=off, 退出後恢復 wipers=II, walkAwayLock=true",
+      "timestamp": "2026-10-20T08:32:36.228Z"
+    },
+    {
+      "name": "P1-09 屏幕清潔模式按 Esc 退出與恢復原抽屜狀態",
+      "passed": true,
+      "detail": "按 Esc 後 screenCleanMode=false",
+      "timestamp": "2026-10-20T08:32:39.752Z"
+    },
+    {
+      "name": "P1-10 固定 1920×1200 畫布於 1280×800 視窗等比縮放不跑版且無 undefined/亂碼",
+      "passed": true,
+      "detail": "畫布尺寸維持 1920×1200, scale=0.657, hasUndefined=false",
+      "timestamp": "2026-10-20T08:32:40.747Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "filename": "p1_01_main_collapsed_topdown.png",
+      "label": "收合正俯視主畫面（左車右圖 + 充電口在左、前備箱與尾箱在右 + 底部 Dock）",
+      "timestamp": "2026-10-20T08:32:07.183Z",
+      "bytes": 627140
+    },
+    {
+      "filename": "p1_02_expanded_34_view_and_rotate.png",
+      "label": "展開低角度前方三四分之一視角與旋轉 + 5 秒回正倒數",
+      "timestamp": "2026-10-20T08:32:08.743Z",
+      "bytes": 663943
+    },
+    {
+      "filename": "p1_03_trunks_chargeport_open.png",
+      "label": "前備箱、尾箱、充電口全開狀態與 3D 指向線",
+      "timestamp": "2026-10-20T08:32:11.145Z",
+      "bytes": 721233
+    },
+    {
+      "filename": "p1_04_climate_drawer_airflow.png",
+      "label": "空調底部抽屜（3D 座艙氣流動畫、可拖動出風方向、前後除霜啟用）",
+      "timestamp": "2026-10-20T08:32:12.736Z",
+      "bytes": 551584
+    },
+    {
+      "filename": "p1_05_seat_adjustment_view.png",
+      "label": "前排座椅調節視圖（前後滑軌 +22mm、靠背傾角 32°、座墊高度 +8mm）",
+      "timestamp": "2026-10-20T08:32:14.078Z",
+      "bytes": 529318
+    },
+    {
+      "filename": "p1_06_navigation_route_compare.png",
+      "label": "導航地圖（OSM 離線預渲染底圖 + 三路線比較 + 駐停導航演示）",
+      "timestamp": "2026-10-20T08:32:15.707Z",
+      "bytes": 756756
+    },
+    {
+      "filename": "p1_07_music_player_and_volume.png",
+      "label": "獨立音樂播放窗（疊於地圖上）與右下音量展開滑桿同步",
+      "timestamp": "2026-10-20T08:32:17.644Z",
+      "bytes": 793162
+    },
+    {
+      "filename": "p1_08_settings_controls.png",
+      "label": "設置 — 1. 控制 (Controls)",
+      "timestamp": "2026-10-20T08:32:18.925Z",
+      "bytes": 595502
+    },
+    {
+      "filename": "p1_09_settings_dynamics.png",
+      "label": "設置 — 2. 動態 / 踏板與轉向（展示限速模式鎖定舒適加速原因）",
+      "timestamp": "2026-10-20T08:32:20.518Z",
+      "bytes": 599876
+    },
+    {
+      "filename": "p1_10_settings_charging.png",
+      "label": "設置 — 3. 充電（展示充電口關閉時禁用解鎖充電口與原因）",
+      "timestamp": "2026-10-20T08:32:22.136Z",
+      "bytes": 572418
+    },
+    {
+      "filename": "p1_11_settings_autopilot_deps.png",
+      "label": "設置 — 4. 自動輔助駕駛（展示關閉自動轉向時禁用 NoA 與自動變道原因）",
+      "timestamp": "2026-10-20T08:32:23.558Z",
+      "bytes": 629118
+    },
+    {
+      "filename": "p1_12_settings_locks.png",
+      "label": "設置 — 5. 車鎖與演示鑰匙管理",
+      "timestamp": "2026-10-20T08:32:25.460Z",
+      "bytes": 604705
+    },
+    {
+      "filename": "p1_13_settings_lights_deps.png",
+      "label": "設置 — 6. 車燈（展示大燈關閉時禁用前霧燈與自動遠光原因）",
+      "timestamp": "2026-10-20T08:32:27.356Z",
+      "bytes": 603508
+    },
+    {
+      "filename": "p1_14_settings_display_day_mode.png",
+      "label": "設置 — 7. 顯示（日間淺色模式切換）",
+      "timestamp": "2026-10-20T08:32:29.290Z",
+      "bytes": 598575
+    },
+    {
+      "filename": "p1_15_settings_trips.png",
+      "label": "設置 — 8. 行程統計與重置",
+      "timestamp": "2026-10-20T08:32:30.919Z",
+      "bytes": 559036
+    },
+    {
+      "filename": "p1_16_settings_schedule.png",
+      "label": "設置 — 9. 日程與離峰充電（展示預約出發依賴原因）",
+      "timestamp": "2026-10-20T08:32:32.516Z",
+      "bytes": 584133
+    },
+    {
+      "filename": "p1_17_settings_safety.png",
+      "label": "設置 — 10. 安全與保障",
+      "timestamp": "2026-10-20T08:32:34.435Z",
+      "bytes": 599592
+    },
+    {
+      "filename": "p1_18_settings_service_carwash_override.png",
+      "label": "設置 — 11. 服務與洗車模式臨時覆蓋狀態",
+      "timestamp": "2026-10-20T08:32:36.046Z",
+      "bytes": 599301
+    },
+    {
+      "filename": "p1_19_settings_software.png",
+      "label": "設置 — 12. 軟件資訊與發行說明調整對話框",
+      "timestamp": "2026-10-20T08:32:37.945Z",
+      "bytes": 531766
+    },
+    {
+      "filename": "p1_20_screen_clean_mode.png",
+      "label": "屏幕清潔模式（覆蓋全畫面並屏蔽底層操作）",
+      "timestamp": "2026-10-20T08:32:39.491Z",
+      "bytes": 64914
+    },
+    {
+      "filename": "p1_21_responsive_scale_test.png",
+      "label": "1280×800 視窗等比縮放測試與階段一行為對照表彈窗",
+      "timestamp": "2026-10-20T08:32:41.975Z",
+      "bytes": 350047
+    }
+  ]
+}
